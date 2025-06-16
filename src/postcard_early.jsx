@@ -3,7 +3,7 @@ import { db, collection, addDoc } from "./firebaseConfig"; // firebase 인증 �
 
 const getReturnURL = () => {
   const params = new URLSearchParams(window.location.search);
-  return params.get("return") || "퀄트릭스 링크";
+  return params.get("return") || "https://kupsychology.qualtrics.com/jfe/form/SV_9WEYYPjgTV7QHPg";
 };
 
 export default function WritingTest() {
@@ -28,14 +28,18 @@ export default function WritingTest() {
   const [preTextTyping, setPreTextTyping] = useState("");   // 타이핑 중인 글자
 
   const typingText = "...DraftMind가 입력중 입니다..."; //입력중
-  const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n당신은 지금 미래의 '나'에게 편지를 쓰고 있군요."; // 인사말
-  const fullText = "편지를 잘 쓸 수 있도록, 이번 파트에서는 제가 도와줄게요!"; // AI 글쓰기 제안문구
+  const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n지금 미래의 '나에게 보내는 편지'를 쓰고 계시네요."; // 인사말
+  const fullText = "이번에는 제가 ‘미래의 나에게 하는 약속’ 파트를 작성해볼게요."; // AI 글쓰기 제안문구
+  const endingText = "\n\n위와 같이 '미래의 나에게 하는 약속’ 파트를 작성해보았어요. \n위의 초록색 '다음 파트로 넘어가기' 버튼을 눌러 편지를 이어서 작성해주세요.";
   const examplePhrase = ["따스한 햇살이", "골목길을 비추고", "나뭇잎 사이로 부는 바람이", "잔잔한 소리를 냈다", "담벼락에는 고양이가 졸고 있었고", "창문 너머로", "김이 서린 찻잔이 보였다", "조용한 거리에", "어울리지 않게", "어디선가 작은 발소리가 들려오고", "고개를 들어", "소리가 난 곳을 찾아 두리번거리자", "멀리서 낯선 그림자를 발견했다"];  // 예시 구문들
   const exampleKeywords = ["따스한", "햇살", "골목길", "비추고", "나뭇잎", "사이", "부는", "바람", "잔잔한", "소리", "냈다", "담벼락", "고양이", "졸고", "있었고", "창문", "너머", "김", "서린", "찻잔", "보였다", "조용한", "거리", "어울리지", "않게", "어디선가", "작은", "발소리", "들려오고", "고개", "들어", "소리", "난", "곳", "찾아", "두리번거리자", "멀리서", "낯선", "그림자", "발견했다"]; // 예시 단어들
 
   const [typingIndex, setTypingIndex] = useState(0);
   const [helloIndex, setHelloIndex] = useState(0);
   const [fullTextIndex, setFullTextIndex] = useState(0);
+  const [isEndingTyping, setIsEndingTyping] = useState(false); // endingText 타이핑 시작 여부
+  const [endingIndex, setEndingIndex] = useState(0); // endingText 타이핑 인덱스
+
 
   const [isTypingTextComplete, setIsTypingTextComplete] = useState(false);
   const [isHelloTyping, setIsHelloTyping] = useState(false);
@@ -48,9 +52,8 @@ export default function WritingTest() {
 
   const [isPressed, setIsPressed] = useState(false);
 
+  const [showPreview, setShowPreview] = useState(false);
 
-  // ✨ Prolific ID 상태 추가
-  const [prolificId, setProlificId] = useState("");
 
   // 🔥 입력 잠금 메시지 상태 추가
   useEffect(() => {
@@ -123,10 +126,9 @@ export default function WritingTest() {
 
     if (helloIndex === hello.length) {
       setTimeout(() => {
-        setDisplayText(""); // 개인화수준 타이핑 시작 전 초기화
         setIsHelloTyping(false);
         setIsFullTextTyping(true);
-      }, 2000);
+      }, 1000);
     }
   }, [helloIndex, isHelloTyping]);
 
@@ -136,7 +138,7 @@ export default function WritingTest() {
       const timer = setTimeout(() => {
         setDisplayText(fullText.slice(0, fullTextIndex + 1));
         setFullTextIndex(fullTextIndex + 1);
-      }, 30);
+      }, 35);
 
       return () => clearTimeout(timer);
     }
@@ -144,7 +146,7 @@ export default function WritingTest() {
       setTimeout(() => {
         setIsFullTextTyping(false);
         setIsPreTextTyping(true);   // ✅ 여기서 타이핑 시작
-      },2000);
+      },1000);
     }
   }, [fullTextIndex, isFullTextTyping]);
 
@@ -155,7 +157,7 @@ export default function WritingTest() {
       const timer = setTimeout(() => {
         setPreTextTyping(predefinedText.slice(0, preTextIndex + 1));
         setPreTextIndex(preTextIndex + 1);
-      }, 50);  // 타이핑 속도 조절
+      }, 40);  // 타이핑 속도 조절
   
       return () => clearTimeout(timer);
     }
@@ -170,9 +172,29 @@ export default function WritingTest() {
         handleChange(finalText); // 경고 검사를 다시 실행
 
         setIsPreTextTyping(false);
+        
+        // ✅ 여기서 endingText 타이핑 시작
+        setIsEndingTyping(true);
+        setEndingIndex(0);  // 시작부터
       }, 1000);
     }
   }, [isPreTextTyping, preTextIndex]);
+
+  // 마무리멘트(endtiming) 타이핑효과
+  useEffect(() => {
+    if (isEndingTyping && endingIndex < endingText.length) {
+      const timer = setTimeout(() => {
+        setDisplayText((prev) => prev + endingText[endingIndex]);
+        setEndingIndex(endingIndex + 1);
+      }, 35);
+      return () => clearTimeout(timer);
+    }
+
+    if (isEndingTyping && endingIndex >= endingText.length) {
+      setIsEndingTyping(false); // 완료 후 종료
+    }
+  }, [isEndingTyping, endingIndex]);
+
   
 
   // 섹션 전환
@@ -188,7 +210,6 @@ export default function WritingTest() {
       setCurrentSectionIndex(currentSectionIndex + 1);
 
       if (currentSectionIndex === 0) {  // 즉, 1 → 2번 섹션으로 넘어가는 순간
-        setDisplayText("");
         setTypingIndex(0);
         setHelloIndex(0);
         setFullTextIndex(0);
@@ -211,15 +232,9 @@ export default function WritingTest() {
   };
 
   // 🔥 Firestore에 데이터 저장하는 함수 추가
-  const handleSubmit = async () => {
+  const handleFinalSubmit = async () => {
     let errorMessages = []; 
 
-    // 조건 1: SONA ID 미입력
-    if (!prolificId.trim()) {
-      errorMessages.push("❌ SONA ID를 적어주세요.");
-    }
-    
-    
     // 조건 2: 아직 섹션 5까지 안옴
     if (currentSectionIndex < sections.length - 1) {
     errorMessages.push("❌ 아직 편지에 필요한 모든 내용이 작성되지 않았습니다.");
@@ -270,7 +285,6 @@ export default function WritingTest() {
 
       //firebase에 UID 포함하여 데이터에 저장
       await addDoc(collection(db, "postcard-early"), {
-        SONAId: prolificId.trim(), // ✨ prolific ID 저장
         text: fullText.trim(),
         wordCount: totalWordCount,
         timestamp: formattedKoreaTime,  // ✅ 한국 시간으로 변환한 값 저장
@@ -285,8 +299,7 @@ export default function WritingTest() {
       setCurrentWordCount(0);
       setSectionTexts(["", "", "", "", ""]);
 
-      setWarning("");
-      setProlificId(""); // ✨ 제출 성공 시 ID 초기화
+      setWarning(""); // ✨ 제출 성공 시 경고메시지 초기화
 
 
       console.log("🔁 Returning to:", getReturnURL());
@@ -305,8 +318,8 @@ export default function WritingTest() {
           
       {/* 제목 및 안내 */}
       <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}> 
-        <h1>📝 미래의 나에게 편지 쓰기</h1>
-        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 다음과 같은 순서로 미래의 나에게 편지를 작성해주세요 (한 파트 당 30단어 이상)</p>
+        <h1>📝 5년 뒤, 미래의 나에게 편지 쓰기</h1>
+        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 다음과 같은 순서로 '5년 뒤'의 나에게 편지를 작성해주세요 (한 파트 당 30단어 이상)</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 인사말/지금의 나</p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 미래의 나에게 하는 약속</p>
@@ -333,7 +346,7 @@ export default function WritingTest() {
         fontSize: "16px",
         }}>
 
-        <strong>✏️ To. 미래의 나에게 </strong>
+        <strong>✏️ To. 5년 뒤의 나에게.. </strong>
         <p>
           {currentSectionIndex < sectionTexts.length
             ? [...sectionTexts.slice(0, currentSectionIndex), currentInput]
@@ -511,35 +524,83 @@ export default function WritingTest() {
         </div>
       )}
 
-    {/* ID 입력 + 제출 */}
-    <div style={{ width: "80%", textAlign: "left", marginTop: "10px", marginBottom: "10px"}}>
-      <label style={{ fontWeight: "bold", marginRight: "10px" }}>SONA ID:</label>
-      <input
-        type="text"
-        value={prolificId}
-        onChange={(e) => setProlificId(e.target.value)}
-        placeholder="Enter your ID"
-        style={{ padding: "5px", fontSize: "14px", width: "200px", marginRight: "15px"}}
-      />
-
-      <span style={{ fontSize: "16px", color: "gray" }}>
-        참여 확인을 위해 SONA ID를 입력해주세요.
-      </span>
-    </div>
-
-    <span style={{ marginTop: "10px", fontSize: "15px", color: "gray" }}>
-    🔔제출버튼을 누르면 1~2초 후 제출이 완료되며, 자동으로 설문으로 넘어갑니다. 설문을 완료해주세요.
-    </span>
 
     {/* Submit 버튼 - 가장 아래로 배치 */}
     <button 
-      onClick={handleSubmit} 
+      onClick={() => {
+        let errorMessages = []; 
+
+        // 현재 입력 중인 섹션도 검사 (혹시 유저가 마지막 섹션까지 다 안 갔을 수도 있으므로)
+        if (currentSectionIndex < sectionTexts.length -1) {
+          errorMessages.push("❌ 아직 편지에 필요한 모든 내용이 작성되지 않았습니다.");
+        }
+
+        if (currentSectionIndex === sections.length - 1 && currentWordCount < 30) {
+          errorMessages.push("❌ 단어 수가 부족합니다 (30단어 이상 작성해주세요).");
+        }
+
+        if (errorMessages.length > 0) {
+          alert(`⚠️ 편지를 제출할 수 없습니다:\n\n${errorMessages.join("\n")}`);
+          return;
+        }
+
+        // 모든 조건 충족 시 미리보기 팝업 열기
+        setShowPreview(true);
+      }}
+
       style={{ 
         marginTop: "10px", padding: "12px 25px", backgroundColor: "#007bff", 
         color: "white", border: "none", cursor: "pointer", fontSize: "20px", fontWeight: "bold"
       }}>
       제출하기
     </button>
+
+{showPreview && (
+  <div style={{
+    position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
+    backgroundColor: "rgba(0,0,0,0.5)", display: "flex",
+    justifyContent: "center", alignItems: "center", zIndex: 9999
+  }}>
+    <div style={{
+      backgroundColor: "#fff8dc", padding: "40px", borderRadius: "12px",
+      width: "80%", maxHeight: "80%", overflowY: "auto", boxShadow: "0 0 15px rgba(0,0,0,0.3)",
+      fontFamily: "serif"
+    }}>
+      <h2 style={{ marginBottom: "20px", fontWeight: "bold", fontSize: "20px" }}>📜 완성된 편지 미리보기</h2>
+
+      <div style={{ whiteSpace: "pre-wrap", fontSize: "16px", lineHeight: 1.6, marginBottom: "30px" }}>
+        {sectionTexts.join("\n")}
+      </div>
+
+      <div style={{ textAlign: "center" }}>
+        <p style={{ marginBottom: "15px" }}>이대로 편지를 제출하시겠습니까?</p>
+        <button
+          onClick={() => {
+            handleFinalSubmit();
+            setShowPreview(false);
+          }}
+          style={{
+            padding: "12px 24px",
+            fontWeight: "bold",
+            fontSize: "16px",
+            borderRadius: "6px",
+            backgroundColor: "#4a90e2",
+            color: "white",
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
+          ✅ 최종 제출하기
+        </button>
+      </div>
+
+      <span style={{ marginTop: "10px", fontSize: "15px", color: "gray", textAlign: "center", display: "block" }}>
+        🔔제출버튼을 누르면 1~2초 후 제출이 완료되며, 자동으로 설문페이지로 넘어갑니다. 남은 설문을 완료해주세요.
+      </span>
+
+    </div>
+  </div>
+)}
 
   </div>
   );
