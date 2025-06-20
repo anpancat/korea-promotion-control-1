@@ -29,7 +29,7 @@ export default function WritingTest() {
 
   const typingText = "...DraftMind가 입력중 입니다..."; //입력중
   const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n지금 미래의 '나에게 보내는 편지'를 쓰고 계시네요."; // 인사말
-  const fullText = "이번에는 제가 ‘미래의 나에게 하는 약속’ 파트를 작성해볼게요."; // AI 글쓰기 제안문구
+  const fullText = "이번에는 제가 편지의 초반인 ‘미래의 나에게 하는 약속’ 파트를 작성해볼게요."; // AI 글쓰기 제안문구
   const endingText = "\n\n위와 같이 '미래의 나에게 하는 약속’ 파트를 작성해보았어요. \n위의 초록색 '다음 파트로 넘어가기' 버튼을 눌러 편지를 이어서 작성해주세요.";
   const examplePhrase = ["따스한 햇살이", "골목길을 비추고", "나뭇잎 사이로 부는 바람이", "잔잔한 소리를 냈다", "담벼락에는 고양이가 졸고 있었고", "창문 너머로", "김이 서린 찻잔이 보였다", "조용한 거리에", "어울리지 않게", "어디선가 작은 발소리가 들려오고", "고개를 들어", "소리가 난 곳을 찾아 두리번거리자", "멀리서 낯선 그림자를 발견했다"];  // 예시 구문들
   const exampleKeywords = ["따스한", "햇살", "골목길", "비추고", "나뭇잎", "사이", "부는", "바람", "잔잔한", "소리", "냈다", "담벼락", "고양이", "졸고", "있었고", "창문", "너머", "김", "서린", "찻잔", "보였다", "조용한", "거리", "어울리지", "않게", "어디선가", "작은", "발소리", "들려오고", "고개", "들어", "소리", "난", "곳", "찾아", "두리번거리자", "멀리서", "낯선", "그림자", "발견했다"]; // 예시 단어들
@@ -235,6 +235,15 @@ export default function WritingTest() {
   const handleFinalSubmit = async () => {
     let errorMessages = []; 
 
+    // 🔥 마지막 currentInput을 sectionTexts에 반영
+    const updated = [...sectionTexts];
+    updated[currentSectionIndex] = currentInput;
+    setSectionTexts(updated);
+
+    const fullText = updated.join("\n"); // ← 반영된 텍스트 기준으로 재정의
+    const totalWordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
+
+
     // 조건 2: 아직 섹션 5까지 안옴
     if (currentSectionIndex < sections.length - 1) {
     errorMessages.push("❌ 아직 편지에 필요한 모든 내용이 작성되지 않았습니다.");
@@ -252,9 +261,6 @@ export default function WritingTest() {
     }
 
     try {
-      const fullText = sectionTexts.join("\n");
-      const totalWordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
-
       //예시 구문 매칭 개수 계산
       const matchedPhrase = examplePhrase.filter(phrase => fullText.trim().includes(phrase)); // 대소문자 구분없이 매칭
 
@@ -569,7 +575,7 @@ export default function WritingTest() {
       <h2 style={{ marginBottom: "20px", fontWeight: "bold", fontSize: "20px" }}>📜 완성된 편지 미리보기</h2>
 
       <div style={{ whiteSpace: "pre-wrap", fontSize: "16px", lineHeight: 1.6, marginBottom: "30px" }}>
-        {sectionTexts.join("\n")}
+        {[...sectionTexts.slice(0, currentSectionIndex), currentInput].join("\n")}
       </div>
 
       <div style={{ textAlign: "center" }}>
