@@ -1,4 +1,4 @@
-import WritingTest from "./postcard_early";
+import WritingTest from "./promotion_early";
 
 function App() {
   return <WritingTest/>;
