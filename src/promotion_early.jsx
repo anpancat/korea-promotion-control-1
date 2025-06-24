@@ -24,6 +24,10 @@ export default function WritingTest() {
   const [displayText, setDisplayText] = useState("");
   const predefinedText = "저희 식당은 지역 농가와 직접 계약을 맺어 매일 신선한 식재료만을 사용합니다. 일반적인 프랜차이즈와 달리 모든 소스와 매장에서 직접 만들어 제공합니다. 정성과 진심이 담긴 수제 요리라는 점에서 다른 식당과 확연히 차별화됩니다."; // 미리 정해진 문장 삽입
 
+  // 선택된 예시 문장을 담을 상태
+  const [selectedExampleIndex, setSelectedExampleIndex] = useState(null);
+  const [showExampleChoice, setShowExampleChoice] = useState(false);
+  
   const [preTextIndex, setPreTextIndex] = useState(0);
   const [isPreTextTyping, setIsPreTextTyping] = useState(false); // 타이핑 중인 글자 저장
   const [preTextTyping, setPreTextTyping] = useState("");   // 타이핑 중인 글자
@@ -145,7 +149,7 @@ export default function WritingTest() {
     if (isFullTextTyping && fullTextIndex >= fullText.length) {
       setTimeout(() => {
         setIsFullTextTyping(false);
-        setIsPreTextTyping(true);   // ✅ 여기서 타이핑 시작
+        setShowExampleChoice(true); // ✅ 문장 선택창 띄우기
       }, 1000);
     }
   }, [fullTextIndex, isFullTextTyping]);
@@ -325,7 +329,7 @@ export default function WritingTest() {
       {/* 제목 및 안내 */}
       <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}> 
         <h1>📝 식당 홍보글 작성하기</h1>
-        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 나만의 식당을 개업한다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요 (식당 이름 & 음식 유형 파트는 10단어 이내, 나머지 파트는 각각 30단어 이상)</p>
+        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 식당의 대표가 되었다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요 (식당 이름 & 음식 유형 파트는 10단어 이내, 나머지 파트는 각각 30단어 이상)</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 식당 이름 & 음식 유형 (10단어 이내) </p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 식당과의 차별점</p>
@@ -521,15 +525,38 @@ export default function WritingTest() {
 
           {/* 본문 (오른쪽) */}
           <div style={{ flex:1 }}>
-            {hasTriggeredOnce && displayText.trim() !== "" &&
-                displayText
+            {hasTriggeredOnce && displayText.trim() !== "" && (
+              <>
+                {displayText
                   .replaceAll(", ", ",\u00A0") // 쉼표 뒤 공백을 불간섭 공백으로 대체하여 줄바꿈 방지
                   .split("\n")
                   .map((line, index) => (
-                    <p key={index} style={{ fontWeight: "bold", fontSize: "16px", whiteSpace: "pre-wrap", wordBreak: "break-word"}}>
+                    <p key={index} style={{ fontWeight: "bold", fontSize: "16px", whiteSpace: "pre-wrap", wordBreak: "break-word", marginBottom: "10px" }}>
                       {line}
                     </p>
                   ))}
+              </>
+            )}
+
+          {/*예시 문장 선택창 표시*/}
+          {showExampleChoice && (
+            <div style={{ marginTop: "20px", backgroundColor: "#fff", padding: "15px", border: "1px dashed #aaa", borderRadius: "6px" }}>
+              <p style={{ fontWeight: "bold" }}>버튼을 눌러 아래의 AI가 작성한 문장을 삽입해주세요:</p>
+              <p>{predefinedText}</p>
+              <button
+                style={{ marginTop: "10px", padding: "8px 16px" }}
+                onClick={() => {
+                  setSelectedExampleIndex(1);
+                  setShowExampleChoice(false);
+                  setPreTextIndex(0);
+                  setPreTextTyping("");
+                  setIsPreTextTyping(true);
+                }}
+              >
+                ✅ 이 문장 삽입하기
+              </button>
+            </div>
+          )}
           </div>
           </div>
         </div>
