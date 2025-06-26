@@ -24,10 +24,6 @@ export default function WritingTest() {
   const [displayText, setDisplayText] = useState("");
   const predefinedText = "저희 식당은 지역 농가와 직접 계약을 맺어 매일 신선한 식재료만을 사용합니다. 일반적인 프랜차이즈와 달리 모든 소스와 매장에서 직접 만들어 제공합니다. 정성과 진심이 담긴 수제 요리라는 점에서 다른 식당과 확연히 차별화됩니다."; // 미리 정해진 문장 삽입
 
-  // 선택된 예시 문장을 담을 상태
-  const [selectedExampleIndex, setSelectedExampleIndex] = useState(null);
-  const [showExampleChoice, setShowExampleChoice] = useState(false);
-  
   const [preTextIndex, setPreTextIndex] = useState(0);
   const [isPreTextTyping, setIsPreTextTyping] = useState(false); // 타이핑 중인 글자 저장
   const [preTextTyping, setPreTextTyping] = useState("");   // 타이핑 중인 글자
@@ -57,6 +53,28 @@ export default function WritingTest() {
   const [isPressed, setIsPressed] = useState(false);
 
   const [showPreview, setShowPreview] = useState(false);
+
+  // 참가자가 입력한 글 지우기 상태 추가
+  const [isErasing, setIsErasing] = useState(false);
+  const [eraseIndex, setEraseIndex] = useState(0);
+  const [startErasing, setStartErasing] = useState(false);  // 지우기 잠시 대기
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);  // 다음 파트 버튼 비활성화용
+
+  const isAiTypingInProgress = () => {
+    return (
+      hasTriggeredOnce &&
+      (!isTypingTextComplete || isHelloTyping || isFullTextTyping || isPreTextTyping || isErasing || isEndingTyping || isWaitingBeforePreTyping)
+    );
+  };
+  const [isWaitingBeforePreTyping, setIsWaitingBeforePreTyping] = useState(false);
+
+  // 섹션 진행률 표시
+  const progressRatio = (currentSectionIndex + 1) / sections.length;
+
+  // 전화번호 입력 상태 추가
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+
 
 
   // 🔥 입력 잠금 메시지 상태 추가
@@ -149,10 +167,50 @@ export default function WritingTest() {
     if (isFullTextTyping && fullTextIndex >= fullText.length) {
       setTimeout(() => {
         setIsFullTextTyping(false);
-        setShowExampleChoice(true); // ✅ 문장 선택창 띄우기
+        
+        // ✅ 이제 글 지우기를 시작하자
+        setStartErasing(true);
       }, 1000);
     }
   }, [fullTextIndex, isFullTextTyping]);
+
+
+  // 글 지우기 시작 효과
+  useEffect(() => {
+    if (startErasing && !isFullTextTyping && !isPreTextTyping && !isErasing) {
+      setIsErasing(true);
+      setEraseIndex(currentInput.length);
+      setStartErasing(false);  // 딱 한 번만 실행
+    }
+  }, [startErasing, isFullTextTyping, isPreTextTyping, isErasing]);
+
+
+  // 글 지우기 효과
+  useEffect(() => {
+    if (isErasing && eraseIndex > 0) {
+      const timer = setTimeout(() => {
+        const newText = currentInput.slice(0, eraseIndex - 1);
+        setCurrentInput(newText);
+        setEraseIndex(eraseIndex - 1);
+      }, 10);  // 지우는 속도
+
+      return () => clearTimeout(timer);
+    }
+
+    if (isErasing && eraseIndex === 0) {
+      setIsErasing(false);
+      setIsWaitingBeforePreTyping(true); // ✅ 대기 상태 ON
+
+      // ✨ 1초 후에 예시문 입력 시작
+      setTimeout(() => {
+        setIsPreTextTyping(true);
+        setPreTextTyping("");
+        setPreTextIndex(0);
+      }, 300); // 1초 후에 타이핑 시작
+    }
+
+  }, [isErasing, eraseIndex]);
+
 
   // 미리 정해진 문장 타이핑효과
   useEffect(() => {
@@ -161,26 +219,25 @@ export default function WritingTest() {
       const timer = setTimeout(() => {
         setPreTextTyping(predefinedText.slice(0, preTextIndex + 1));
         setPreTextIndex(preTextIndex + 1);
-      }, 40);  // 타이핑 속도 조절
+      }, 35);  // 타이핑 속도 조절
   
       return () => clearTimeout(timer);
     }
   
     if (isPreTextTyping && preTextIndex >= predefinedText.length) {
       setTimeout(() => {
-        const finalText = !currentInput.endsWith(predefinedText)
-          ? predefinedText : currentInput;
-
+        const finalText = predefinedText;
         setCurrentInput(finalText);
         setCurrentWordCount(finalText.trim().split(/\s+/).length);
         handleChange(finalText); // 경고 검사를 다시 실행
 
         setIsPreTextTyping(false);
+        setIsWaitingBeforePreTyping(false);
         
         // ✅ 여기서 endingText 타이핑 시작
         setIsEndingTyping(true);
         setEndingIndex(0);  // 시작부터
-      }, 1000);
+      }, 800);
     }
   }, [isPreTextTyping, preTextIndex]);
 
@@ -196,39 +253,76 @@ export default function WritingTest() {
 
     if (isEndingTyping && endingIndex >= endingText.length) {
       setIsEndingTyping(false); // 완료 후 종료
+
+      // ✅ 버튼 활성화만 해줌 (다음 파트 이동은 사용자가 직접 하게)
+      setIsButtonDisabled(false);  // 다시 누를 수 있게
     }
   }, [isEndingTyping, endingIndex]);
 
-  
 
+  // 작성된 글 지우기
+  const triggerAIHelp = () => {
+    setTypingIndex(0);
+    setHelloIndex(0);
+    setFullTextIndex(0);
+    setPreTextIndex(0);
+    setPreTextTyping("");
+    setIsTypingTextComplete(false);
+    setIsHelloTyping(false);
+    setIsFullTextTyping(false);
+    setIsPreTextTyping(false);
+    setIsEndingTyping(false);
+    setEndingIndex(0);
+
+    setHasTriggeredOnce(true);  // 🔥 이 줄 꼭 필요!
+    setIsInputDisabled(true);  // ✅ 추가!
+  };
+
+  // AI 흐름 완료 후 다음 섹션으로 넘어가기
+  const moveToNextSection = () => {
+    const updated = [...sectionTexts];
+    updated[currentSectionIndex] = currentInput;
+    setSectionTexts(updated);
+
+    setCurrentInput("");
+    setCurrentWordCount(0);
+    setCurrentSectionIndex(currentSectionIndex + 1);
+    setIsInputDisabled(false);
+    setIsButtonDisabled(false);
+    setHasTriggeredOnce(false);
+  };
+
+  
   // 섹션 전환
   const handleNextSection = () => {
     const updated = [...sectionTexts];
     updated[currentSectionIndex] = currentInput;
     setSectionTexts(updated);
 
-    // 섹션이 마지막이 아닐 경우에만 다음 섹션으로 이동
+    // ✅ 오직 2번 섹션(=index 1)이 끝났을 때만 AI 흐름 시작
+    if (currentSectionIndex === 1) {
+      // 👇 이미 AI 출력이 완료된 경우 → 다음 섹션으로 이동
+      if (!isHelloTyping && !isFullTextTyping && !isPreTextTyping && !isErasing && !isEndingTyping && hasTriggeredOnce) {
+        moveToNextSection();  // ✅ 한 번만 실행
+        return;
+      }
+
+      // 👇 아직 AI 흐름 시작 전이라면 triggerAIHelp 실행
+      if (!hasTriggeredOnce) {
+        triggerAIHelp();  // ✨ 최초 1회만 실행
+        setIsButtonDisabled(true);  // 🔥 여기서 버튼 잠시 숨김
+      }
+      
+      return;  // AI 흐름 중일 땐 아무 것도 하지 않음
+    }
+
+    // ✅ 섹션 1,3,4,5는 그냥 넘어감
     if (currentSectionIndex < sections.length - 1) {
       setCurrentInput("");
       setCurrentWordCount(0);
       setCurrentSectionIndex(currentSectionIndex + 1);
-
-      if (currentSectionIndex === 0) {  // 즉, 1 → 2번 섹션으로 넘어가는 순간
-        setTypingIndex(0);
-        setHelloIndex(0);
-        setFullTextIndex(0);
-        setPreTextIndex(0);
-        setPreTextTyping("");
-        setIsTypingTextComplete(false);
-        setIsHelloTyping(false);
-        setIsFullTextTyping(false);
-        setIsPreTextTyping(false);
-        setIsInputDisabled(true);
-        setHasTriggeredOnce(true);  // 이게 true가 되면 typingText 타이핑이 시작됨
-      } else {
-        setIsInputDisabled(false); // ✅ 사용자가 다음으로 넘어갈 때만 활성화
-      }
-    } else {
+      setIsInputDisabled(false);
+   } else {
       setCurrentInput("");
       setCurrentWordCount(0);
       alert("✉️ 홍보글 작성이 완료되었습니다! 하단의 제출 버튼을 눌러주세요.");
@@ -247,6 +341,14 @@ export default function WritingTest() {
     const fullText = updated.join("\n"); // ← 반영된 텍스트 기준으로 재정의
     const totalWordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
 
+    // 조건 1: 전화번호가 비어 있으면 제출 막기
+    if (!phoneNumber.trim()) {
+      errorMessages.push("❌ 전화번호를 입력해주세요.");
+    }
+    // 전화번호 형식 검사
+    else if (!/^010-\d{4}-\d{4}$/.test(phoneNumber.trim())) {
+      errorMessages.push("❌ 전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)");
+    }
 
     // 조건 2: 아직 섹션 5까지 안옴
     if (currentSectionIndex < sections.length - 1) {
@@ -294,7 +396,8 @@ export default function WritingTest() {
       const formattedKoreaTime = formatter.format(koreaTime);
 
       //firebase에 UID 포함하여 데이터에 저장
-      await addDoc(collection(db, "promotion-early"), {
+      await addDoc(collection(db, "promotion-early-1"), {
+        phoneNumber: phoneNumber,
         text: fullText.trim(),
         wordCount: totalWordCount,
         timestamp: formattedKoreaTime,  // ✅ 한국 시간으로 변환한 값 저장
@@ -305,15 +408,13 @@ export default function WritingTest() {
       });
 
       alert("✅ 작성하신 글이 성공적으로 제출되었습니다!");
+      setPhoneNumber(""); // 전화번호 초기화
       setCurrentInput("");
       setCurrentWordCount(0);
       setSectionTexts(["", "", "", "", ""]);
-
       setWarning(""); // ✨ 제출 성공 시 경고메시지 초기화
 
-
       console.log("🔁 Returning to:", getReturnURL());
-
       // 🎯 퀄트릭스로 다시 이동
       window.location.href = getReturnURL();
 
@@ -389,7 +490,7 @@ export default function WritingTest() {
           />
           {showInputLockMessage && (
             <p style={{ color: "gray", fontWeight: "bold", fontSize: "14px", marginTop: "5px" }}>
-              {(isPreTextTyping || preTextTyping.length < predefinedText.length)
+               {isAiTypingInProgress()
               ? "✨ DraftMind가 입력중입니다. 잠시만 기다려주세요..."
               : "🪄 DraftMind의 입력이 완료되었습니다!"}
             </p>
@@ -400,7 +501,14 @@ export default function WritingTest() {
       {/* 단어 수 및 경고 */}
       <div style={{ width: "80%", marginTop: "-15px"}}>
         {/* 단어 수 + 완료 메시지 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "10px", marginLeft: "10px", flexWrap: "wrap" }}>
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "space-between", // 왼쪽: 단어수 / 오른쪽: 진행바
+          alignItems: "center", 
+          gap: "12px", 
+          marginTop: "10px", 
+          marginLeft: "0px", 
+          flexWrap: "wrap" }}>
           <p style={{
             color: (currentSectionIndex === 0 
               ? (currentWordCount > 0 && currentWordCount <= 10)
@@ -427,26 +535,32 @@ export default function WritingTest() {
                 ✅ 필요한 단어수가 채워졌습니다.
               </p>
 
-              <button 
-                onClick={handleNextSection}
-                onMouseDown={() => setIsPressed(true)}
-                onMouseUp={() => setIsPressed(false)}
-                onMouseLeave={() => setIsPressed(false)}
-                style={{
-                  padding: "5px 12px",
-                  backgroundColor: isPressed ? "#4CAF50" : "#45a049",
-                  color: "white",
-                  border: "1px solid #3e8e41",
-                  borderRadius: "4px",
-                  marginTop: "10px",
-                  fontSize: "15px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  transition: "all 0.2s ease"
-                }}
-              >
-                다음 파트로 넘어가기
-              </button>
+
+            <button 
+              onClick={handleNextSection}
+              onMouseDown={() => setIsPressed(true)}
+              onMouseUp={() => setIsPressed(false)}
+              onMouseLeave={() => setIsPressed(false)}
+              style={{
+                padding: "5px 12px",
+                backgroundColor: isPressed ? "#4CAF50" : "#45a049",
+                color: "white",
+                border: "1px solid #3e8e41",
+                borderRadius: "4px",
+                marginTop: "10px",
+                marginRight: "500px",
+                fontSize: "15px",
+                fontWeight: "500",
+                cursor: isButtonDisabled ? "default" : "pointer",
+                visibility: isButtonDisabled ? "hidden" : "visible", // ✅ 핵심
+                transition: "all 0.2s ease"
+              }}
+              disabled={isButtonDisabled}
+            >
+              다음 파트로 넘어가기
+            </button>
+
+
             </>
             ) : (
             <p style={{
@@ -459,6 +573,33 @@ export default function WritingTest() {
             </p>
             )
           )}
+
+          {/* 진행 바 */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            fontSize: "16px",
+            marginRight: "-10px"
+          }}>
+            <span style={{ marginBottom: "4px", color: "#888" }}>
+              {currentSectionIndex + 1} / {sections.length} 파트
+            </span>
+            <div style={{
+              width: "120px",
+              height: "6px",
+              backgroundColor: "#eee",
+              borderRadius: "4px",
+              overflow: "hidden"
+            }}>
+              <div style={{
+                width: `${progressRatio * 100}%`,
+                height: "100%",
+                backgroundColor: "#4CAF50",
+                transition: "width 0.4s ease"
+              }} />
+            </div>
+          </div>
         </div>
 
         {/* warning 메시지 - 단어수 아래에 배치 */}
@@ -538,25 +679,6 @@ export default function WritingTest() {
               </>
             )}
 
-          {/*예시 문장 선택창 표시*/}
-          {showExampleChoice && (
-            <div style={{ marginTop: "20px", backgroundColor: "#fff", padding: "15px", border: "1px dashed #aaa", borderRadius: "6px" }}>
-              <p style={{ fontWeight: "bold" }}>버튼을 눌러 아래의 AI가 작성한 문장을 삽입해주세요:</p>
-              <p>{predefinedText}</p>
-              <button
-                style={{ marginTop: "10px", padding: "8px 16px" }}
-                onClick={() => {
-                  setSelectedExampleIndex(1);
-                  setShowExampleChoice(false);
-                  setPreTextIndex(0);
-                  setPreTextTyping("");
-                  setIsPreTextTyping(true);
-                }}
-              >
-                ✅ 이 문장 삽입하기
-              </button>
-            </div>
-          )}
           </div>
           </div>
         </div>
@@ -612,15 +734,38 @@ export default function WritingTest() {
         {[...sectionTexts.slice(0, currentSectionIndex), currentInput].join("\n")}
       </div>
 
-      <div style={{ textAlign: "center" }}>
-        <p style={{ marginBottom: "15px", fontFamily: "serif" }}>이대로 홍보글을 제출하시겠습니까?</p>
+      {/* 전화번호 입력 / 최종 제출 버튼*/}
+      <div style={{
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center", 
+        gap: "12px", 
+        marginBottom: "20px"
+      }}>
+        <div>
+          <label htmlFor="phoneInput" style={{ fontWeight: "bold", marginRight: "8px" }}>
+            📱 전화번호:
+          </label>
+          <input
+            id="phoneInput"
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="010-1234-5678"
+            style={{
+              padding: "8px",
+              borderRadius: "6px",
+              border: "1px solid #ccc",
+              width: "180px"
+            }}
+          />
+        </div>
+
         <button
-          onClick={() => {
-            handleFinalSubmit();
-            setShowPreview(false);
-          }}
+          onClick={() => {handleFinalSubmit()}}
           style={{
-            padding: "12px 24px",
+            padding: "12px 20px",
+            marginBottom: "-5px",
             fontWeight: "bold",
             fontSize: "16px",
             borderRadius: "6px",
@@ -630,11 +775,15 @@ export default function WritingTest() {
             cursor: "pointer"
           }}
         >
-          ✅ 최종 제출하기
+          최종 제출하기
         </button>
       </div>
 
       <span style={{ marginTop: "10px", fontSize: "15px", color: "gray", textAlign: "center", display: "block" }}>
+        ✅참여 확인을 위해 전화번호를 반드시 입력해주세요.
+      </span>
+
+      <span style={{ marginTop: "5px", fontSize: "15px", color: "gray", textAlign: "center", display: "block" }}>
         🔔제출버튼을 누르면 2~3초 후 제출이 완료되며, 자동으로 설문페이지로 넘어갑니다. 남은 설문을 완료해주세요.
       </span>
 
