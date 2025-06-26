@@ -219,7 +219,7 @@ export default function WritingTest() {
       const timer = setTimeout(() => {
         setPreTextTyping(predefinedText.slice(0, preTextIndex + 1));
         setPreTextIndex(preTextIndex + 1);
-      }, 35);  // 타이핑 속도 조절
+      }, 30);  // 타이핑 속도 조절
   
       return () => clearTimeout(timer);
     }
