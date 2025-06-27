@@ -429,7 +429,7 @@ export default function WritingTest() {
           
       {/* 제목 및 안내 */}
       <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}> 
-        <h1>📝 식당 홍보글 작성하기</h1>
+        <h2>📝 식당 홍보글 작성하기</h2>
         <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 식당의 대표가 되었다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요.</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 식당 이름 & 음식 유형 (10단어 이상) </p>
@@ -528,7 +528,7 @@ export default function WritingTest() {
             <p style={{
               color: "green",
               fontWeight: "bold",
-              fontSize: "16px",
+              fontSize: "14px",
               marginLeft: "8px"
             }}>
               ✅ 필요한 단어수가 채워졌습니다.
@@ -748,7 +748,7 @@ export default function WritingTest() {
           <input
             id="phoneInput"
             type="text"
-            inputMode="numeric" // ← 모바일 키보드는 숫자 기반
+            inputMode="text" // ← 모바일 키보드는 숫자 기반
             pattern="[0-9\-]*"   // ← 숫자와 하이픈만 허용
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
