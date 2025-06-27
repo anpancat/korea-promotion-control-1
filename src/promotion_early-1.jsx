@@ -430,13 +430,13 @@ export default function WritingTest() {
       {/* 제목 및 안내 */}
       <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}> 
         <h1>📝 식당 홍보글 작성하기</h1>
-        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 식당의 대표가 되었다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요 (식당 이름 & 음식 유형 파트는 10단어 이상, 나머지 파트는 각각 30단어 이상)</p>
+        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 식당의 대표가 되었다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요.</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 식당 이름 & 음식 유형 (10단어 이상) </p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 식당과의 차별점</p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>3. 주요 고객층 및 홍보 전략</p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>4. 추천 메뉴</p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 매장 위치 및 내부 설명</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 식당과의 차별점 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>3. 주요 고객층 및 홍보 전략 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>4. 추천 메뉴 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 매장 위치 및 내부 설명 (30단어 이상)</p>
         </div>
         <p style = {{ color: "darkred", fontSize: "16px", marginBottom: "-15px"}}> 각 파트를 단어수 제한에 맞게 작성한 후 '다음 순서로 넘어가기' 버튼을 누르면 다음 파트로 넘어갈 수 있습니다. 총 5개의 파트를 모두 마친 후 제출하기 버튼을 눌러주세요!</p>
       </div>
@@ -462,7 +462,7 @@ export default function WritingTest() {
           {currentSectionIndex < sectionTexts.length
             ? [...sectionTexts.slice(0, currentSectionIndex), currentInput]
             .filter(Boolean)
-            .join("\n\n")
+            .join("\n")
             : sectionTexts.join("\n")}
         </p>
       </div>
@@ -489,7 +489,7 @@ export default function WritingTest() {
             disabled={isInputDisabled}
           />
           {showInputLockMessage && (
-            <p style={{ color: "gray", fontWeight: "bold", fontSize: "14px", marginTop: "5px" }}>
+            <p style={{ color: "gray", fontWeight: "bold", fontSize: "14px", marginTop: "5px", marginBottom: "0px" }}>
                {isAiTypingInProgress()
               ? "✨ DraftMind가 입력중입니다. 잠시만 기다려주세요..."
               : "🪄 DraftMind의 입력이 완료되었습니다!"}
@@ -505,7 +505,7 @@ export default function WritingTest() {
         justifyContent: "space-between",
         alignItems: "center",
         width: "80%",
-        marginTop: "10px",
+        marginTop: "-5px",
       }}>
 
         {/* 왼쪽: 단어 수 + 안내 */}
@@ -546,7 +546,8 @@ export default function WritingTest() {
             height: "6px",
             backgroundColor: "#eee",
             borderRadius: "4px",
-            overflow: "hidden"
+            overflow: "hidden",
+            marginRight: "-20px"
           }}>
             <div style={{
               width: `${progressRatio * 100}%`,
@@ -559,10 +560,10 @@ export default function WritingTest() {
       </div>
 
       {/* ✅ 2줄 아래: 버튼 또는 메시지 + warning */}
-      <div style={{ width: "80%", marginTop: "10px" }}>
+      <div style={{ width: "80%", marginTop: "-5px" }}>
         {((currentSectionIndex === 0 && currentWordCount >= 10) || 
-          (currentSectionIndex > 0 && currentWordCount >= 30)) && (
-          currentSectionIndex < sections.length - 1 ? (
+          (currentSectionIndex > 0 && currentWordCount >= 30)) && warning.length === 0 && // ✅ 경고 메시지가 없을 때만!
+          (currentSectionIndex < sections.length - 1 ? (
             <button 
               onClick={handleNextSection}
               onMouseDown={() => setIsPressed(true)}
@@ -746,7 +747,9 @@ export default function WritingTest() {
           </label>
           <input
             id="phoneInput"
-            type="tel"
+            type="text"
+            inputMode="numeric" // ← 모바일 키보드는 숫자 기반
+            pattern="[0-9\-]*"   // ← 숫자와 하이픈만 허용
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             placeholder="010-1234-5678"
