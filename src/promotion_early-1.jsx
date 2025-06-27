@@ -8,7 +8,7 @@ const getReturnURL = () => {
 
 export default function WritingTest() {
   const sections = [
-    "식당 이름 & 음식 유형 (10단어 이내)",
+    "식당 이름 & 음식 유형 (10단어 이상)",
     "다른 식당과의 차별점",
     "주요 고객층 및 홍보 전략",
     "추천 메뉴",
@@ -430,9 +430,9 @@ export default function WritingTest() {
       {/* 제목 및 안내 */}
       <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}> 
         <h1>📝 식당 홍보글 작성하기</h1>
-        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 식당의 대표가 되었다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요 (식당 이름 & 음식 유형 파트는 10단어 이내, 나머지 파트는 각각 30단어 이상)</p>
+        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 식당의 대표가 되었다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요 (식당 이름 & 음식 유형 파트는 10단어 이상, 나머지 파트는 각각 30단어 이상)</p>
         <div style={{ lineHeight: "1.5"}}>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 식당 이름 & 음식 유형 (10단어 이내) </p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 식당 이름 & 음식 유형 (10단어 이상) </p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 식당과의 차별점</p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>3. 주요 고객층 및 홍보 전략</p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>4. 추천 메뉴</p>
@@ -511,10 +511,10 @@ export default function WritingTest() {
           flexWrap: "wrap" }}>
           <p style={{
             color: (currentSectionIndex === 0 
-              ? (currentWordCount > 0 && currentWordCount <= 10)
+              ? (currentWordCount > 0 && currentWordCount >= 10)
               : currentWordCount >= 30) ? "green" : "black",
             fontWeight: (currentSectionIndex === 0 
-              ? (currentWordCount > 0 && currentWordCount <= 10)
+              ? (currentWordCount > 0 && currentWordCount >= 10)
               : currentWordCount >= 30) ? "bold" : "normal",
             fontSize: "16px",
             margin: 0
@@ -522,7 +522,7 @@ export default function WritingTest() {
             {currentWordCount}/{currentSectionIndex === 0 ? 10 : 30} 단어
           </p>
 
-          {((currentSectionIndex === 0 && currentWordCount > 0 && currentWordCount <= 10) || 
+          {((currentSectionIndex === 0 && currentWordCount > 0 && currentWordCount >= 10) || 
             (currentSectionIndex > 0 && currentWordCount >= 30)) && (
             currentSectionIndex < sections.length - 1 ? (
             <>
