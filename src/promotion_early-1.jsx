@@ -603,7 +603,7 @@ export default function WritingTest() {
 
         {/* warning 메시지 */}
         {warning.length > 0 && (
-          <div style={{ color: "red", fontWeight: "bold", fontSize: "16px", marginTop: "5px" }}>
+          <div style={{ color: "red", fontWeight: "bold", fontSize: "16px", marginTop: "0px" }}>
             {warning.map((msg, index) => (
               <p key={index} style={{ margin: "4px 0" }}>❌ {msg}</p>
             ))}
