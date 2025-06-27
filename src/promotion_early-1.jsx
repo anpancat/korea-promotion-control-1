@@ -498,23 +498,24 @@ export default function WritingTest() {
         </div>
       )}
 
-      {/* 단어 수 및 경고 */}
-      <div style={{ width: "80%", marginTop: "-15px"}}>
-        {/* 단어 수 + 완료 메시지 */}
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "space-between", // 왼쪽: 단어수 / 오른쪽: 진행바
-          alignItems: "center", 
-          gap: "12px", 
-          marginTop: "10px", 
-          marginLeft: "0px", 
-          flexWrap: "wrap" }}>
+
+      {/* ✅ 1줄 위: 단어 수 + 안내 메시지 + 진행바 */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "80%",
+        marginTop: "10px",
+      }}>
+
+        {/* 왼쪽: 단어 수 + 안내 */}
+        <div style={{ display: "flex", alignItems: "center" }}>
           <p style={{
             color: (currentSectionIndex === 0 
-              ? (currentWordCount > 0 && currentWordCount >= 10)
+              ? (currentWordCount >= 10)
               : currentWordCount >= 30) ? "green" : "black",
             fontWeight: (currentSectionIndex === 0 
-              ? (currentWordCount > 0 && currentWordCount >= 10)
+              ? (currentWordCount >= 10)
               : currentWordCount >= 30) ? "bold" : "normal",
             fontSize: "16px",
             margin: 0
@@ -522,87 +523,84 @@ export default function WritingTest() {
             {currentWordCount}/{currentSectionIndex === 0 ? 10 : 30} 단어
           </p>
 
-          {((currentSectionIndex === 0 && currentWordCount > 0 && currentWordCount >= 10) || 
+          {((currentSectionIndex === 0 && currentWordCount >= 10) || 
             (currentSectionIndex > 0 && currentWordCount >= 30)) && (
-            currentSectionIndex < sections.length - 1 ? (
-            <>
-              <p style={{
-                color: "green",
-                fontWeight: "bold",
-                fontSize: "16px",
-                margin: 0
-              }}>
-                ✅ 필요한 단어수가 채워졌습니다.
-              </p>
+            <p style={{
+              color: "green",
+              fontWeight: "bold",
+              fontSize: "16px",
+              marginLeft: "8px"
+            }}>
+              ✅ 필요한 단어수가 채워졌습니다.
+            </p>
+          )}
+        </div>
 
+        {/* 오른쪽: 진행 바 */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+          <span style={{ marginBottom: "4px", color: "#888", fontSize: "16px" }}>
+            {currentSectionIndex + 1} / {sections.length} 파트
+          </span>
+          <div style={{
+            width: "120px",
+            height: "6px",
+            backgroundColor: "#eee",
+            borderRadius: "4px",
+            overflow: "hidden"
+          }}>
+            <div style={{
+              width: `${progressRatio * 100}%`,
+              height: "100%",
+              backgroundColor: "#4CAF50",
+              transition: "width 0.4s ease"
+            }} />
+          </div>
+        </div>
+      </div>
 
+      {/* ✅ 2줄 아래: 버튼 또는 메시지 + warning */}
+      <div style={{ width: "80%", marginTop: "10px" }}>
+        {((currentSectionIndex === 0 && currentWordCount >= 10) || 
+          (currentSectionIndex > 0 && currentWordCount >= 30)) && (
+          currentSectionIndex < sections.length - 1 ? (
             <button 
               onClick={handleNextSection}
               onMouseDown={() => setIsPressed(true)}
               onMouseUp={() => setIsPressed(false)}
               onMouseLeave={() => setIsPressed(false)}
               style={{
-                padding: "5px 12px",
+                padding: "4px 9px",
                 backgroundColor: isPressed ? "#4CAF50" : "#45a049",
                 color: "white",
                 border: "1px solid #3e8e41",
                 borderRadius: "4px",
-                marginTop: "10px",
-                marginRight: "500px",
-                fontSize: "15px",
+                fontSize: "14px",
                 fontWeight: "500",
                 cursor: isButtonDisabled ? "default" : "pointer",
-                visibility: isButtonDisabled ? "hidden" : "visible", // ✅ 핵심
-                transition: "all 0.2s ease"
+                visibility: isButtonDisabled ? "hidden" : "visible",
+                transition: "all 0.2s ease",
+                whiteSpace: "nowrap",
+                lineHeight: "1.2",
+                height: "auto",
+                maxHeight: "34px"
               }}
               disabled={isButtonDisabled}
             >
               다음 파트로 넘어가기
             </button>
-
-
-            </>
-            ) : (
+          ) : (
             <p style={{
               color: "#007bff",
               fontWeight: "bold",
               fontSize: "16px",
-              marginTop: "15px"
+              marginTop: "0px"
             }}>
               💡홍보글에 필요한 내용이 모두 작성되었습니다! 아래 제출 버튼을 눌러주세요.
             </p>
-            )
-          )}
+          )
+        )}
 
-          {/* 진행 바 */}
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            fontSize: "16px",
-            marginRight: "-10px"
-          }}>
-            <span style={{ marginBottom: "4px", color: "#888" }}>
-              {currentSectionIndex + 1} / {sections.length} 파트
-            </span>
-            <div style={{
-              width: "120px",
-              height: "6px",
-              backgroundColor: "#eee",
-              borderRadius: "4px",
-              overflow: "hidden"
-            }}>
-              <div style={{
-                width: `${progressRatio * 100}%`,
-                height: "100%",
-                backgroundColor: "#4CAF50",
-                transition: "width 0.4s ease"
-              }} />
-            </div>
-          </div>
-        </div>
-
-        {/* warning 메시지 - 단어수 아래에 배치 */}
+        {/* warning 메시지 */}
         {warning.length > 0 && (
           <div style={{ color: "red", fontWeight: "bold", fontSize: "16px", marginTop: "5px" }}>
             {warning.map((msg, index) => (
