@@ -22,7 +22,7 @@ export default function WritingTest() {
   const [hasTriggeredOnce, setHasTriggeredOnce] = useState(false); // AI 애니메이션 조건 제어용
 
   const [displayText, setDisplayText] = useState("");
-  const predefinedText = "저희 식당은 지역 농가와 직접 계약을 맺어 매일 신선한 식재료만을 사용합니다. 일반적인 프랜차이즈와 달리 모든 소스와 매장에서 직접 만들어 제공합니다. 정성과 진심이 담긴 수제 요리라는 점에서 다른 식당과 확연히 차별화됩니다."; // 미리 정해진 문장 삽입
+  const predefinedText = "저희 식당은 다양한 메뉴를 제공합니다. 남녀노소 모두가 만족할 수 있는 식사를 위해, 다채로운 메뉴를 마련했다는 점에서 다른 식당과 차별화됩니다. 덕분에 고객 여러분께서는 취향과 기분에 따라 다양한 음식을 선택하실 수 있습니다."; // 미리 정해진 문장 삽입
 
   const [preTextIndex, setPreTextIndex] = useState(0);
   const [isPreTextTyping, setIsPreTextTyping] = useState(false); // 타이핑 중인 글자 저장
@@ -396,7 +396,7 @@ export default function WritingTest() {
       const formattedKoreaTime = formatter.format(koreaTime);
 
       //firebase에 UID 포함하여 데이터에 저장
-      await addDoc(collection(db, "promotion-early-1"), {
+      await addDoc(collection(db, "new-promotion-early-1"), {
         phoneNumber: phoneNumber,
         text: fullText.trim(),
         wordCount: totalWordCount,
