@@ -8,8 +8,8 @@ const getReturnURL = () => {
 
 export default function WritingTest() {
   const sections = [
-    "식당 이름 & 음식 유형 (10단어 이상)",
-    "다른 식당과의 차별점",
+    "레스토랑 이름과 간략한 소개 (10단어 이상)",
+    "다른 레스토랑과의 차별점",
     "주요 고객층 및 홍보 전략",
     "추천 메뉴",
     "매장 위치 및 내부 설명"
@@ -22,16 +22,16 @@ export default function WritingTest() {
   const [hasTriggeredOnce, setHasTriggeredOnce] = useState(false); // AI 애니메이션 조건 제어용
 
   const [displayText, setDisplayText] = useState("");
-  const predefinedText = "저희 식당은 다양한 메뉴를 제공합니다. 남녀노소 모두가 만족할 수 있는 식사를 위해, 다채로운 메뉴를 마련했다는 점에서 다른 식당과 차별화됩니다. 덕분에 고객 여러분께서는 취향과 기분에 따라 다양한 음식을 선택하실 수 있습니다."; // 미리 정해진 문장 삽입
+  const predefinedText = "저희 레스토랑은 다양한 메뉴를 제공합니다. 남녀노소 모두가 만족할 수 있는 식사를 위해, 다채로운 메뉴를 마련했다는 점에서 다른 레스토랑과 차별화됩니다. 덕분에 고객 여러분께서는 취향과 기분에 따라 다양한 음식을 선택하실 수 있습니다."; // 미리 정해진 문장 삽입
 
   const [preTextIndex, setPreTextIndex] = useState(0);
   const [isPreTextTyping, setIsPreTextTyping] = useState(false); // 타이핑 중인 글자 저장
   const [preTextTyping, setPreTextTyping] = useState("");   // 타이핑 중인 글자
 
   const typingText = "...DraftMind가 입력중 입니다..."; //입력중
-  const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n지금 '식당 홍보글'을 쓰고 계시네요."; // 인사말
-  const fullText = "홍보글 초반부를 작성하고 계시는군요. '다른 식당과의 차별점' 파트는 제가 도와드릴게요."; // AI 글쓰기 제안문구
-  const endingText = "\n\n위와 같이 '다른 식당과의 차별점' 파트를 작성해보았어요. \n위의 초록색 '다음 파트로 넘어가기' 버튼을 눌러 홍보글을 이어서 작성해주세요.";
+  const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n지금 '양식 레스토랑 홍보글'을 쓰고 계시네요."; // 인사말
+  const fullText = "홍보글 초반부를 작성하고 계시는군요. '다른 레스토랑과의 차별점' 파트는 제가 도와드릴게요."; // AI 글쓰기 제안문구
+  const endingText = "\n\n위와 같이 '다른 레스토랑과의 차별점' 파트를 작성해보았어요. \n위의 초록색 '다음 파트로 넘어가기' 버튼을 눌러 홍보글을 이어서 작성해주세요.";
  // const examplePhrase = ["따스한 햇살이", "골목길을 비추고", "나뭇잎 사이로 부는 바람이", "잔잔한 소리를 냈다", "담벼락에는 고양이가 졸고 있었고", "창문 너머로", "김이 서린 찻잔이 보였다", "조용한 거리에", "어울리지 않게", "어디선가 작은 발소리가 들려오고", "고개를 들어", "소리가 난 곳을 찾아 두리번거리자", "멀리서 낯선 그림자를 발견했다"];  // 예시 구문들
  // const exampleKeywords = ["따스한", "햇살", "골목길", "비추고", "나뭇잎", "사이", "부는", "바람", "잔잔한", "소리", "냈다", "담벼락", "고양이", "졸고", "있었고", "창문", "너머", "김", "서린", "찻잔", "보였다", "조용한", "거리", "어울리지", "않게", "어디선가", "작은", "발소리", "들려오고", "고개", "들어", "소리", "난", "곳", "찾아", "두리번거리자", "멀리서", "낯선", "그림자", "발견했다"]; // 예시 단어들
 
@@ -429,11 +429,11 @@ export default function WritingTest() {
           
       {/* 제목 및 안내 */}
       <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}> 
-        <h2>📝 식당 홍보글 작성하기</h2>
-        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 식당의 대표가 되었다고 상상하면서, 다음과 같은 순서로 식당의 홍보글을 작성해주세요.</p>
+        <h2>📝 양식 레스토랑 홍보글 작성하기</h2>
+        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 양식 레스토랑의 대표가 되었다고 상상하면서, 다음과 같은 순서로 레스토랑의 홍보글을 작성해주세요.</p>
         <div style={{ lineHeight: "1.5"}}>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 식당 이름 & 음식 유형 (10단어 이상) </p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 식당과의 차별점 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 레스토랑 이름과 간략한 소개 (10단어 이상) </p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 레스토랑과의 차별점 (30단어 이상)</p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>3. 주요 고객층 및 홍보 전략 (30단어 이상)</p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>4. 추천 메뉴 (30단어 이상)</p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 매장 위치 및 내부 설명 (30단어 이상)</p>
