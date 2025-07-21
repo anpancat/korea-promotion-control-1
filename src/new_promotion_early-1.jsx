@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { db, collection, addDoc } from "./firebaseConfig"; // firebase 인증 모듈 불러오기
 
 const getReturnURL = () => {
@@ -22,7 +22,12 @@ export default function WritingTest() {
   const [hasTriggeredOnce, setHasTriggeredOnce] = useState(false); // AI 애니메이션 조건 제어용
 
   const [displayText, setDisplayText] = useState("");
-  const predefinedText = "저희 레스토랑은 다양한 메뉴를 제공합니다. 남녀노소 모두가 만족할 수 있는 식사를 위해, 다채로운 메뉴를 마련했다는 점에서 다른 레스토랑과 차별화됩니다. 덕분에 고객 여러분께서는 취향과 기분에 따라 다양한 음식을 선택하실 수 있습니다."; // 미리 정해진 문장 삽입
+  const predefinedText1 = "저희 레스토랑은 다양한 메뉴를 제공합니다. 남녀노소 모두가 만족할 수 있는 식사를 위해, 다채로운 메뉴를 마련했다는 점에서 다른 레스토랑과 차별화됩니다. 덕분에 고객 여러분께서는 취향과 기분에 따라 다양한 음식을 선택하실 수 있습니다."; // 미리 정해진 문장 삽입
+
+  // 선택된 예시 문장을 담을 상태
+  const [selectedExampleIndex, setSelectedExampleIndex] = useState(null);
+  const [showExampleChoice, setShowExampleChoice] = useState(false);
+  const [predefinedText, setPredefinedText] = useState("");
 
   const [preTextIndex, setPreTextIndex] = useState(0);
   const [isPreTextTyping, setIsPreTextTyping] = useState(false); // 타이핑 중인 글자 저장
@@ -32,14 +37,18 @@ export default function WritingTest() {
   const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n지금 '양식 레스토랑 홍보글'을 쓰고 계시네요."; // 인사말
   const fullText = "홍보글 초반부를 작성하고 계시는군요. '다른 레스토랑과의 차별점' 파트는 제가 도와드릴게요."; // AI 글쓰기 제안문구
   const endingText = "\n\n위와 같이 '다른 레스토랑과의 차별점' 파트를 작성해보았어요. \n위의 초록색 '다음 파트로 넘어가기' 버튼을 눌러 홍보글을 이어서 작성해주세요.";
- // const examplePhrase = ["따스한 햇살이", "골목길을 비추고", "나뭇잎 사이로 부는 바람이", "잔잔한 소리를 냈다", "담벼락에는 고양이가 졸고 있었고", "창문 너머로", "김이 서린 찻잔이 보였다", "조용한 거리에", "어울리지 않게", "어디선가 작은 발소리가 들려오고", "고개를 들어", "소리가 난 곳을 찾아 두리번거리자", "멀리서 낯선 그림자를 발견했다"];  // 예시 구문들
- // const exampleKeywords = ["따스한", "햇살", "골목길", "비추고", "나뭇잎", "사이", "부는", "바람", "잔잔한", "소리", "냈다", "담벼락", "고양이", "졸고", "있었고", "창문", "너머", "김", "서린", "찻잔", "보였다", "조용한", "거리", "어울리지", "않게", "어디선가", "작은", "발소리", "들려오고", "고개", "들어", "소리", "난", "곳", "찾아", "두리번거리자", "멀리서", "낯선", "그림자", "발견했다"]; // 예시 단어들
 
   const [typingIndex, setTypingIndex] = useState(0);
   const [helloIndex, setHelloIndex] = useState(0);
   const [fullTextIndex, setFullTextIndex] = useState(0);
   const [isEndingTyping, setIsEndingTyping] = useState(false); // endingText 타이핑 시작 여부
   const [endingIndex, setEndingIndex] = useState(0); // endingText 타이핑 인덱스
+
+  // 예시문장 타이핑 상태 추가
+  const [exampleTypingIndex, setExampleTypingIndex] = useState(0);
+  const [exampleTypingTexts, setExampleTypingTexts] = useState([""]);
+  const [isExampleTyping, setIsExampleTyping] = useState(false);
+  const [showExampleContainer, setShowExampleContainer] = useState(false); // 🔥 예시 선택박스 표시 여부
 
   const [isTypingTextComplete, setIsTypingTextComplete] = useState(false);
   const [isHelloTyping, setIsHelloTyping] = useState(false);
@@ -58,15 +67,38 @@ export default function WritingTest() {
   const [isErasing, setIsErasing] = useState(false);
   const [eraseIndex, setEraseIndex] = useState(0);
   const [startErasing, setStartErasing] = useState(false);  // 지우기 잠시 대기
-  const [isButtonDisabled, setIsButtonDisabled] = useState(false);  // 다음 파트 버튼 비활성화용
+  
+  const [hasInsertedExample, setHasInsertedExample] = useState(false);
 
   const isAiTypingInProgress = () => {
+    if (!hasTriggeredOnce) return false;
     return (
-      hasTriggeredOnce &&
-      (!isTypingTextComplete || isHelloTyping || isFullTextTyping || isPreTextTyping || isErasing || isEndingTyping || isWaitingBeforePreTyping)
-    );
+        isHelloTyping || 
+        isFullTextTyping || 
+        isExampleTyping || 
+        isErasing || 
+        isWaitingBeforePreTyping || 
+        isPreTextTyping || 
+        isEndingTyping || 
+        !isTypingTextComplete
+        );
   };
   const [isWaitingBeforePreTyping, setIsWaitingBeforePreTyping] = useState(false);
+
+  const shouldShowNextButton = () => {
+    if (currentSectionIndex !== 1) return true;
+
+    // 1차 등장: 30단어 이상이면 나타나야 함
+    if (!hasTriggeredOnce && currentWordCount >= 30) return true;
+
+    // 2차 등장: 모든 AI 흐름 끝난 뒤 다시 등장
+    return (
+      !isEndingTyping &&
+      endingIndex >= endingText.length &&
+      hasInsertedExample
+    );
+  };
+
 
   // 섹션 진행률 표시
   const progressRatio = (currentSectionIndex + 1) / sections.length;
@@ -105,7 +137,7 @@ export default function WritingTest() {
   
       // 🔥 중복 단어 비율 계산 (전체 단어의 30% 이상이 동일한 단어면 경고)
       const overusedWords = Object.entries(wordCounts)
-        .filter(([_, count]) => count / words.length > 0.3)
+        .filter(([_, count]) => count >= 5)
         .map(([word]) => word);
   
       if (overusedWords.length > 0) {
@@ -167,15 +199,32 @@ export default function WritingTest() {
     if (isFullTextTyping && fullTextIndex >= fullText.length) {
       setTimeout(() => {
         setIsFullTextTyping(false);
-        
-        // ✅ 이제 글 지우기를 시작하자
-        setStartErasing(true);
-      }, 1000);
+
+        // 🔥 예시박스 먼저 등장시킴
+        setShowExampleContainer(true);
+
+        // 🔥 예시 문장 타이핑 시작
+        setIsExampleTyping(true);
+        setExampleTypingIndex(0);
+        setExampleTypingTexts([""]);
+      }, 500);
     }
   }, [fullTextIndex, isFullTextTyping]);
+        
+
+  // 예시 선택창 처리 핸들러
+  const handleExampleChoice = () => {
+    const chosenText = predefinedText1;
+
+    setShowExampleChoice(false);
+    setPredefinedText(chosenText); // 선택된 문장 저장
+    setStartErasing(true);           // ✅ 지우기 시작 트리거!
+    setIsInputDisabled(true);        // 입력창 잠금
+    setHasInsertedExample(false);   // 🔥 여기 꼭 다시 false로 초기화
+  };
 
 
-  // 글 지우기 시작 효과
+  // 글 지우기 효과
   useEffect(() => {
     if (startErasing && !isFullTextTyping && !isPreTextTyping && !isErasing) {
       setIsErasing(true);
@@ -184,8 +233,6 @@ export default function WritingTest() {
     }
   }, [startErasing, isFullTextTyping, isPreTextTyping, isErasing]);
 
-
-  // 글 지우기 효과
   useEffect(() => {
     if (isErasing && eraseIndex > 0) {
       const timer = setTimeout(() => {
@@ -203,62 +250,55 @@ export default function WritingTest() {
 
       // ✨ 1초 후에 예시문 입력 시작
       setTimeout(() => {
-        setIsPreTextTyping(true);
-        setPreTextTyping("");
-        setPreTextIndex(0);
+        setIsPreTextTyping(false);
+        setCurrentInput(predefinedText); // 지운 후에 선택한 예시문장 입력
+        setIsEndingTyping(true); // 마지막 멘트 타이핑 시작
       }, 300); // 1초 후에 타이핑 시작
     }
 
   }, [isErasing, eraseIndex]);
 
+  const currentExampleIndexRef = useRef(0);  // 현재 몇 번째 문장
+  const charIndexRef = useRef(0);            // 해당 문장에서 몇 번째 글자
 
-  // 미리 정해진 문장 타이핑효과
+  // 예시 문장 선택창에서 타이핑효과
   useEffect(() => {
-    //타이핑 효과 진행
-    if (isPreTextTyping && preTextIndex < predefinedText.length) {
-      const timer = setTimeout(() => {
-        setPreTextTyping(predefinedText.slice(0, preTextIndex + 1));
-        setPreTextIndex(preTextIndex + 1);
-      }, 30);  // 타이핑 속도 조절
-  
-      return () => clearTimeout(timer);
-    }
-  
-    if (isPreTextTyping && preTextIndex >= predefinedText.length) {
-      setTimeout(() => {
-        const finalText = predefinedText;
-        setCurrentInput(finalText);
-        setCurrentWordCount(finalText.trim().split(/\s+/).length);
-        handleChange(finalText); // 경고 검사를 다시 실행
+    if (!isExampleTyping) return;
 
-        setIsPreTextTyping(false);
-        setIsWaitingBeforePreTyping(false);
-        
-        // ✅ 여기서 endingText 타이핑 시작
-        setIsEndingTyping(true);
-        setEndingIndex(0);  // 시작부터
-      }, 800);
-    }
-  }, [isPreTextTyping, preTextIndex]);
+    const examples = [
+      predefinedText1,
+    ];
 
-  // 마무리멘트(endtiming) 타이핑효과
-  useEffect(() => {
-    if (isEndingTyping && endingIndex < endingText.length) {
-      const timer = setTimeout(() => {
-        setDisplayText((prev) => prev + endingText[endingIndex]);
-        setEndingIndex(endingIndex + 1);
-      }, 35);
-      return () => clearTimeout(timer);
-    }
+    const typeChar = () => {
+      const currentIdx = currentExampleIndexRef.current;
+      const charIdx = charIndexRef.current;
 
-    if (isEndingTyping && endingIndex >= endingText.length) {
-      setIsEndingTyping(false); // 완료 후 종료
+      if (currentIdx >= examples.length) {
+        setIsExampleTyping(false);
+        setShowExampleChoice(true); // ✅ 타이핑이 끝난 후에만 선택지 버튼 등장
+        return;
+      }
 
-      // ✅ 버튼 활성화만 해줌 (다음 파트 이동은 사용자가 직접 하게)
-      setIsButtonDisabled(false);  // 다시 누를 수 있게
-    }
-  }, [isEndingTyping, endingIndex]);
+      const currentText = examples[currentIdx];
 
+      if (charIdx <= currentText.length) {
+        setExampleTypingTexts((prev) => {
+          const updated = [...prev];
+          updated[currentIdx] = currentText.slice(0, charIdx);
+          return updated;
+        });
+
+        charIndexRef.current += 1;
+        setTimeout(typeChar, 20); 
+      } else {
+        currentExampleIndexRef.current += 1;
+        charIndexRef.current = 0;
+        setTimeout(typeChar, 500); // 다음 문장 전 여유 시간
+      }
+    };
+
+    typeChar();
+  }, [isExampleTyping]);
 
   // 작성된 글 지우기
   const triggerAIHelp = () => {
@@ -273,10 +313,99 @@ export default function WritingTest() {
     setIsPreTextTyping(false);
     setIsEndingTyping(false);
     setEndingIndex(0);
+    setHasInsertedExample(false); 
 
     setHasTriggeredOnce(true);  // 🔥 이 줄 꼭 필요!
     setIsInputDisabled(true);  // ✅ 추가!
   };
+
+
+  // 예시문장 타이핑 종료 후 처리
+  useEffect(() => {
+    if (isPreTextTyping && preTextIndex < predefinedText.length) {
+      const timer = setTimeout(() => {
+        setPreTextTyping((prev) => prev + predefinedText[preTextIndex]);
+        setPreTextIndex(preTextIndex + 1);
+      }, 35);
+      return () => clearTimeout(timer);
+    }
+
+    // 🔥 타이핑이 끝났을 때 currentInput에 저장!
+    if (isPreTextTyping && preTextIndex === predefinedText.length) {
+      setIsPreTextTyping(false);
+      setCurrentInput(predefinedText);  
+      setIsEndingTyping(true);          // 마지막 멘트 타이핑 시작
+    }
+  }, [isPreTextTyping, preTextIndex, predefinedText]);
+
+
+
+  // 마무리멘트(endtiming) 타이핑효과
+  useEffect(() => {
+    if (isEndingTyping && endingIndex < endingText.length) {
+      const timer = setTimeout(() => {
+        setDisplayText((prev) => prev + endingText[endingIndex]);
+        setEndingIndex(endingIndex + 1);
+      }, 35);
+      return () => clearTimeout(timer);
+    }
+
+    if (isEndingTyping && endingIndex >= endingText.length) {
+      setIsEndingTyping(false); // 완료 후 종료
+
+      setTimeout(() => {
+        setHasInsertedExample(true);
+      }, 1000);  // 1초 후 버튼 활성화
+    }
+  }, [isEndingTyping, endingIndex, endingText.length]);
+
+
+  useEffect(() => {
+    if (
+      !isEndingTyping &&
+      endingIndex >= endingText.length &&
+      hasTriggeredOnce &&
+      !hasInsertedExample
+    ) {
+      setHasInsertedExample(true);
+    }
+  }, [
+    isEndingTyping,
+    endingIndex,
+    hasTriggeredOnce,
+    hasInsertedExample
+  ]);
+
+
+    // 🔧 안전하게 endingText가 모두 끝났는지 체크하는 로직
+  useEffect(() => {
+    if (
+      hasTriggeredOnce &&
+      !isHelloTyping &&
+      !isFullTextTyping &&
+      !isExampleTyping &&
+      !isErasing &&
+      !isWaitingBeforePreTyping &&
+      !isPreTextTyping &&
+      !isEndingTyping &&
+      endingIndex >= endingText.length &&
+      !hasInsertedExample
+    ) {
+      setHasInsertedExample(true);
+    }
+  }, [
+    hasTriggeredOnce,
+    isHelloTyping,
+    isFullTextTyping,
+    isExampleTyping,
+    isErasing,
+    isWaitingBeforePreTyping,
+    isPreTextTyping,
+    isEndingTyping,
+    endingIndex,
+    hasInsertedExample
+  ]);
+
 
   // AI 흐름 완료 후 다음 섹션으로 넘어가기
   const moveToNextSection = () => {
@@ -310,7 +439,6 @@ export default function WritingTest() {
       // 👇 아직 AI 흐름 시작 전이라면 triggerAIHelp 실행
       if (!hasTriggeredOnce) {
         triggerAIHelp();  // ✨ 최초 1회만 실행
-        setIsButtonDisabled(true);  // 🔥 여기서 버튼 잠시 숨김
       }
       
       return;  // AI 흐름 중일 땐 아무 것도 하지 않음
@@ -398,9 +526,9 @@ export default function WritingTest() {
       //firebase에 UID 포함하여 데이터에 저장
       await addDoc(collection(db, "new-promotion-early-1"), {
         phoneNumber: phoneNumber,
-        text: fullText.trim(),
         wordCount: totalWordCount,
         timestamp: formattedKoreaTime,  // ✅ 한국 시간으로 변환한 값 저장
+        text: fullText.trim(), 
         // exampleWordCount: exampleWordCount, // 예시단어 매칭개수
         // exampleWords: matchedWords.join(", "), // 예시단어 매칭된 단어들
         // examplePhraseCount: examplePhraseCount, // 예시구문 매칭개수
@@ -490,40 +618,34 @@ export default function WritingTest() {
           />
           {showInputLockMessage && (
             <p style={{ color: "gray", fontWeight: "bold", fontSize: "14px", marginTop: "5px", marginBottom: "0px" }}>
-               {isAiTypingInProgress()
-              ? "✨ DraftMind가 입력중입니다. 잠시만 기다려주세요..."
-              : "🪄 DraftMind의 입력이 완료되었습니다!"}
+              {hasTriggeredOnce && endingIndex >= endingText.length && hasInsertedExample
+                ? "🪄 DraftMind의 입력이 완료되었습니다!"
+                : "✨ DraftMind가 입력중입니다. 잠시만 기다려주세요..."}
             </p>
           )}
         </div>
       )}
 
 
-      {/* ✅ 1줄 위: 단어 수 + 안내 메시지 + 진행바 */}
+      {/* ✅ 위쪽: 단어 수, 안내, 진행 바 */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         width: "80%",
-        marginTop: "-5px",
+        marginTop: "-5px"
       }}>
-
-        {/* 왼쪽: 단어 수 + 안내 */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <p style={{
-            color: (currentSectionIndex === 0 
-              ? (currentWordCount >= 10)
-              : currentWordCount >= 30) ? "green" : "black",
-            fontWeight: (currentSectionIndex === 0 
-              ? (currentWordCount >= 10)
-              : currentWordCount >= 30) ? "bold" : "normal",
+            color: (currentSectionIndex === 0 ? currentWordCount >= 10 : currentWordCount >= 30) ? "green" : "black",
+            fontWeight: (currentSectionIndex === 0 ? currentWordCount >= 10 : currentWordCount >= 30) ? "bold" : "normal",
             fontSize: "16px",
             margin: 0
           }}>
             {currentWordCount}/{currentSectionIndex === 0 ? 10 : 30} 단어
           </p>
 
-          {((currentSectionIndex === 0 && currentWordCount >= 10) || 
+          {((currentSectionIndex === 0 && currentWordCount >= 10) ||
             (currentSectionIndex > 0 && currentWordCount >= 30)) && (
             <p style={{
               color: "green",
@@ -536,7 +658,7 @@ export default function WritingTest() {
           )}
         </div>
 
-        {/* 오른쪽: 진행 바 */}
+        {/* 진행률 표시 */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
           <span style={{ marginBottom: "4px", color: "#888", fontSize: "16px" }}>
             {currentSectionIndex + 1} / {sections.length} 파트
@@ -546,8 +668,7 @@ export default function WritingTest() {
             height: "6px",
             backgroundColor: "#eee",
             borderRadius: "4px",
-            overflow: "hidden",
-            marginRight: "-20px"
+            overflow: "hidden"
           }}>
             <div style={{
               width: `${progressRatio * 100}%`,
@@ -559,12 +680,12 @@ export default function WritingTest() {
         </div>
       </div>
 
-      {/* ✅ 2줄 아래: 버튼 또는 메시지 + warning */}
+      {/* ✅ 아래쪽: 버튼 또는 안내 메시지 + warning */}
       <div style={{ width: "80%", marginTop: "-5px" }}>
-        {((currentSectionIndex === 0 && currentWordCount >= 10) || 
+        {((currentSectionIndex === 0 && currentWordCount >= 10) ||
           (currentSectionIndex > 0 && currentWordCount >= 30)) && warning.length === 0 && // ✅ 경고 메시지가 없을 때만!
           (currentSectionIndex < sections.length - 1 ? (
-            <button 
+            <button
               onClick={handleNextSection}
               onMouseDown={() => setIsPressed(true)}
               onMouseUp={() => setIsPressed(false)}
@@ -577,15 +698,14 @@ export default function WritingTest() {
                 borderRadius: "4px",
                 fontSize: "14px",
                 fontWeight: "500",
-                cursor: isButtonDisabled ? "default" : "pointer",
-                visibility: isButtonDisabled ? "hidden" : "visible",
                 transition: "all 0.2s ease",
                 whiteSpace: "nowrap",
                 lineHeight: "1.2",
                 height: "auto",
-                maxHeight: "34px"
+                maxHeight: "34px",
+                visibility: shouldShowNextButton() ? "visible" : "hidden", // ← 버튼을 숨김
+                cursor: shouldShowNextButton() ? "pointer" : "default",
               }}
-              disabled={isButtonDisabled}
             >
               다음 파트로 넘어가기
             </button>
@@ -596,12 +716,11 @@ export default function WritingTest() {
               fontSize: "16px",
               marginTop: "0px"
             }}>
-              💡홍보글에 필요한 내용이 모두 작성되었습니다! 아래 제출 버튼을 눌러주세요.
+              💡 홍보글에 필요한 내용이 모두 작성되었습니다! 아래 제출 버튼을 눌러주세요.
             </p>
           )
         )}
 
-        {/* warning 메시지 */}
         {warning.length > 0 && (
           <div style={{ color: "red", fontWeight: "bold", fontSize: "16px", marginTop: "0px" }}>
             {warning.map((msg, index) => (
@@ -678,7 +797,28 @@ export default function WritingTest() {
               </>
             )}
 
-          </div>
+              {/*예시 문장 선택창 표시*/}
+              {showExampleContainer && (
+                <div style={{ marginTop: "20px", backgroundColor: "#fff", padding: "15px", border: "1px dashed #aaa", borderRadius: "6px" }}>
+                  <p style={{ fontWeight: "bold" }}>당신의 글에 넣을 문장을 선택해주세요:</p>
+
+                    <p>
+                      {exampleTypingTexts[0]}
+                    </p>
+
+                  {showExampleChoice && (
+                    <div style={{ marginTop: "10px", display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                        <button
+                          onClick={() => handleExampleChoice()}
+                          style={{ padding: "8px 16px" }}
+                        >
+                          위 문장 선택
+                        </button>
+                    </div>
+                  )}
+                </div>
+              )}      
+            </div>
           </div>
         </div>
       )}
