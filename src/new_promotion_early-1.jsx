@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { db, collection, addDoc } from "./firebaseConfig"; // firebase 인증 모듈 불러오기
 
-const getReturnURL = () => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("return") || "https://kupsychology.qualtrics.com/jfe/form/SV_50cgZp3hS4QPJUq";
-};
 
 export default function WritingTest() {
   const sections = [
@@ -495,19 +491,6 @@ export default function WritingTest() {
     }
 
     try {
-      //예시 구문 매칭 개수 계산
-      // const matchedPhrase = examplePhrase.filter(phrase => fullText.trim().includes(phrase)); // 대소문자 구분없이 매칭
-
-      //예시 단어 매칭 개수 계산
-      // const textWords = fullText.trim().match(/[가-힣]+/g) || [];
-      // const matchedWords = exampleKeywords.filter(keyword =>
-        // textWords.some(word => word.includes(keyword))
-      // );
-
-      // const examplePhraseCount = matchedPhrase.length; // 예시구문 매칭 개수
-      // const exampleWordCount = matchedWords.length; // 예시단어 매칭 개수
-
-
       // 현재 한국 시간(KST) 가져오기
       const koreaTime = new Date();
       // 한국 시간의 날짜와 시간을 문자열로 변환
@@ -529,10 +512,6 @@ export default function WritingTest() {
         wordCount: totalWordCount,
         timestamp: formattedKoreaTime,  // ✅ 한국 시간으로 변환한 값 저장
         text: fullText.trim(), 
-        // exampleWordCount: exampleWordCount, // 예시단어 매칭개수
-        // exampleWords: matchedWords.join(", "), // 예시단어 매칭된 단어들
-        // examplePhraseCount: examplePhraseCount, // 예시구문 매칭개수
-        // examplePhrases: matchedPhrase.join(", ") // 예시구문 매칭된 구문들
       });
 
       alert("✅ 작성하신 글이 성공적으로 제출되었습니다!");
@@ -542,9 +521,17 @@ export default function WritingTest() {
       setSectionTexts(["", "", "", "", ""]);
       setWarning(""); // ✨ 제출 성공 시 경고메시지 초기화
 
-      console.log("🔁 Returning to:", getReturnURL());
-      // 🎯 퀄트릭스로 다시 이동
-      window.location.href = getReturnURL();
+
+      // URL 파라미터에서 panel_id 가져오기
+      const params = new URLSearchParams(window.location.search);
+      const panelId = params.get("panel_id");
+
+      // 🔁 마크로밀 엠브레인 설문으로 복귀 (아래 링크는 실제 조사 진행 시 변경되는 링크로 교체 예정)
+      if (panelId) {
+        window.location.replace(`https://survey.panel.co.kr/2019/XXXX.asp?panel_id=${panelId}&status=001`);
+      } else {
+        alert("panel_id가 없습니다. 설문으로 돌아갈 수 없습니다.");
+      }
 
     } catch (error) {
       console.error("🔥 데이터를 저장하는 데 문제가 발생했습니다:", error.message);
@@ -567,6 +554,7 @@ export default function WritingTest() {
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 매장 위치 및 내부 설명 (30단어 이상)</p>
         </div>
         <p style = {{ color: "darkred", fontSize: "16px", marginBottom: "-15px"}}> 각 파트를 단어수 제한에 맞게 작성한 후 '다음 순서로 넘어가기' 버튼을 누르면 다음 파트로 넘어갈 수 있습니다. 총 5개의 파트를 모두 마친 후 제출하기 버튼을 눌러주세요!</p>
+        <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> (⚠️ 주의: 글쓰기 과제를 불성실하게 했을 경우, 설문을 완료했더라도 보상 제공이 어렵습니다. 한번 다음 파트로 넘어가면 이전으로 돌아갈 수 없으니, 이점 유념하시어 성실한 참여 부탁드립니다. ⚠️)</p>
       </div>
 
       {/* 실시간 반영 홍보글 */}
@@ -924,8 +912,13 @@ export default function WritingTest() {
         ✅참여 확인을 위해 전화번호를 반드시 입력해주세요.
       </span>
 
+
       <span style={{ marginTop: "5px", fontSize: "15px", color: "gray", textAlign: "center", display: "block" }}>
         🔔제출버튼을 누르면 2~3초 후 제출이 완료되며, 자동으로 설문페이지로 넘어갑니다. 남은 설문을 완료해주세요.
+      </span>
+
+      <span style={{ marginTop: "5px", fontSize: "15px", color: "red", textAlign: "center", display: "block" }}>
+        ⚠️ 주의: 글쓰기 과제를 불성실하게 했을 경우, 설문을 완료했더라도 보상 제공이 어렵습니다. ⚠️
       </span>
 
     </div>
