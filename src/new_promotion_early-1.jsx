@@ -743,7 +743,7 @@ export default function WritingTest() {
 
       // 🔁 마크로밀 엠브레인 설문으로 복귀 (아래 링크는 실제 조사 진행 시 변경되는 링크로 교체 예정)
       if (panelId) {
-        window.location.replace(`https://survey.panel.co.kr/2019/XXXX.asp?panel_id=${panelId}&status=001`);
+        window.location.replace(`https://survey.panel.co.kr/2025/142289/m9.asp?panel_id=[id]&status=001`);
       } else {
         alert("panel_id가 없습니다. 설문으로 돌아갈 수 없습니다.");
       }
