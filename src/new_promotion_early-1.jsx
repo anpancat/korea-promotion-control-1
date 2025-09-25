@@ -299,7 +299,7 @@ export default function WritingTest() {
 
       if (suspiciousByLength || suspiciousByJamo || (suspiciousByHangul && suspiciousByJosa)) {
         warningMessages.push(
-          "짧은 단어/글자의 반복이 감지되었습니다. 삭제 후 정상적으로 글을 작성하면, 다음 파트로 넘어가실 수 있습니다."
+          "무의미한 단어/글자의 반복이 감지되었습니다. 삭제 후 정상적으로 글을 작성하면, 다음 파트로 넘어가실 수 있습니다."
         );
       }
 
