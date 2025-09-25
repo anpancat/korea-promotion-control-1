@@ -100,7 +100,7 @@ export default function WritingTest() {
   const progressRatio = (currentSectionIndex + 1) / sections.length;
 
   // 전화번호 입력 상태 추가
-  const [phoneNumber, setPhoneNumber] = useState("");
+//  const [phoneNumber, setPhoneNumber] = useState("");
 
 
 
@@ -110,6 +110,29 @@ export default function WritingTest() {
     setShowInputLockMessage(isInputDisabled);
   }, [isInputDisabled]);
 
+  // ⛔ 붙여넣기/드롭/단축키 차단 핸들러
+  const preventPaste = (e) => {
+    e.preventDefault();
+    alert("붙여넣기는 허용되지 않습니다. 직접 입력해주세요.");
+  };
+
+  const preventKeyPaste = (e) => {
+    const isPasteCombo =
+      ((e.ctrlKey || e.metaKey) && (e.key === "v" || e.key === "V")) ||
+      (e.shiftKey && e.key === "Insert");
+    if (isPasteCombo) {
+      e.preventDefault();
+      alert("붙여넣기는 허용되지 않습니다. 직접 입력해주세요.");
+    }
+  };
+
+  const preventDrop = (e) => {
+    // 드래그 앤 드롭으로 텍스트가 들어오는 것 차단
+    e.preventDefault();
+  };
+
+
+
   const handleChange = (value) => {
     if (currentSectionIndex >= sectionTexts.length) return;
 
@@ -118,28 +141,211 @@ export default function WritingTest() {
     setCurrentWordCount(wordCount);
   
     let warningMessages = []; // 여러 개의 경고 메시지를 저장할 배열
+
+
+
+
   
+    // 입력이 비어 있으면 즉시 종료
+    if (value.trim().length === 0) {
+      setWarning([]);
+      return;
+    }
+
+
+    // ---------- 반복 탐지 시작 ----------
+    // 0) 토큰화 (공백 기준)
+    const rawTokens = value.trim().split(/\s+/).filter(Boolean);
+
+    // 1) 토큰 정규화 함수
+    //    - 특수문자만 있는 토큰: 같은 글자 반복을 1개로 축약 (!!!! -> !)
+    //    - 한 글자만 반복(ㅋㅋㅋㅋ, ㅎㅎㅎ): 해당 글자 1개로 축약 (ㅋㅋㅋㅋ -> ㅋ)
+    //    - 일반 단어: 앞뒤 문장부호만 제거하고, 소문자화
+    const normalizeToken = (t) => {
+      // 전부 기호/문장부호?
+      if (/^[\p{P}\p{S}]+$/u.test(t)) {
+        return t.replace(/(.)\1+/gu, "$1");
+      }
+      // 같은 글자만 반복된 경우
+      const onlyOneCharRepeated = /^(.)(\1+)$/u.exec(t);
+      if (onlyOneCharRepeated) return onlyOneCharRepeated[1];
+      // 일반 단어: 앞뒤 문장부호 제거
+      const stripped = t.replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, "");
+      return stripped.toLowerCase();
+    };
+
+    const normTokens = rawTokens.map(normalizeToken).filter(Boolean);
+
+    // 2) 토큰 빈도 기반 과다 반복 (예: 동일 토큰 5회 이상)
+    const OVERUSE = 5;
+    const freq = {};
+    for (const w of normTokens) freq[w] = (freq[w] || 0) + 1;
+    const overusedKeys = Object.entries(freq)
+      .filter(([, c]) => c >= OVERUSE)
+      .map(([k]) => k);
+
+    // 3) 문자 레벨 장문 반복(공백 제거 후 같은 문자 8회 이상 연속)
+    const noSpace = value.replace(/\s+/g, "");
+    const longRuns = noSpace.match(/([\p{L}\p{N}\p{P}\p{S}])\1{7,}/gu) || [];
+    const longRunChars = [...new Set(longRuns.map((s) => s[0]))];
+
+    // 4) 경고 메시지 구성 (특수문자는 보기 좋게 라벨링)
+    const label = (w) =>
+      /^[\p{P}\p{S}]+$/u.test(w) ? `특수문자 '${w}'` : `'${w}'`;
+
+    if (normTokens.length > 5 && overusedKeys.length > 0) {
+      warningMessages.push(
+        `같은 단어의 과도한 반복이 감지되었습니다: ${overusedKeys
+          .map(label)
+          .join(", ")} , 삭제 후 정상적으로 글을 작성하면, 다음 파트로 넘어가실 수 있습니다.`
+      );
+    }
+    if (longRunChars.length > 0) {
+      warningMessages.push(
+        `공백을 제외하고 동일 문자 연속 반복(8회 이상)이 감지되었습니다: ${longRunChars
+          .map(label)
+          .join(", ")} , 삭제 후 정상적으로 글을 작성하면, 다음 파트로 넘어가실 수 있습니다.`
+      );
+    }
+    // ---------- 반복 탐지 끝 ----------
+
+
+    // 5) 의미 없는 입력(키보드 난타) 탐지 -----------------------------
+    // 한국어 자모만으로 이뤄진 토큰? (예: ㅋ, ㅎㅎ, ㅏㅏㅏ)
+    const jamoOnlyRe = /^[\u1100-\u11FF\u3130-\u318F]+$/u;
+    // 한국어 완성형 음절 포함?
+    const hasHangulSyllableRe = /[\uAC00-\uD7A3]/u;
+    // 한국어 조사/어미로 끝나는 토큰 (아주 간단한 휴리스틱)
+    const josaEndingRe = /[\uAC00-\uD7A3]+(은|는|이|가|의|을|를|에|에서|으로|와|과|도|만|까지|부터|으로서|으로써|랑|하고|이며|입니다|이다|합니다|하다|이에요|예요|였|였다|했다|였습니다|했습니다)$/u;
+
+    // 원본 토큰(공백 기준)으로 지표 계산
+    const totalTokens = rawTokens.length;
+    let shortCnt = 0;       // 1~2글자 토큰 수
+    let jamoOnlyCnt = 0;    // 자모만 토큰 수
+    let hangulSyllCnt = 0;  // 완성형 한글 포함 토큰 수
+    let josaLikeCnt = 0;    // 조사/어미로 끝나는 토큰 수
+
+    rawTokens.forEach((t) => {
+      const len = t.length;
+      if (len <= 2) shortCnt += 1;
+      if (jamoOnlyRe.test(t)) jamoOnlyCnt += 1;
+      if (hasHangulSyllableRe.test(t)) hangulSyllCnt += 1;
+      if (josaEndingRe.test(t)) josaLikeCnt += 1;
+    });
+
+
+    // --- 영어 난타 감지 도우미(정의는 사용보다 위에 있어야 함) ---
+    const EN_ALPHA = /^[A-Za-z]+$/;                         // 영문만
+    const EN_CONSONANT_RUN = /[bcdfghjklmnpqrstvwxyz]{4,}/i; // 자음 4연속 이상
+    const EN_MIXED_PUNCT = /[A-Za-z]+[^A-Za-z\s]+[A-Za-z]+/; // 단어 중간에 기호 끼임
+
+    // 오탐 줄이는 간단 화이트리스트 (필요시 수정/추가)
+    const EN_WHITELIST = new Set([
+      "the","a","an","and","to","of","for","in","on","with","at","from","by","is","are","this","that","it",
+      "we","you","they","our","your","i","he","she","as","be","or","if","not","but","so",
+      "restaurant","menu","dish","dishes","price","prices","location","service","taste","tasty", "flavor",
+      "special","unique","recommend","open","hours","near","city","street","fresh","daily","customer","customers",
+      "quality","chef","bar","wine","dessert","lunch","dinner","brunch","seafood","steak","pasta","salad", "risotto", "pizza", 
+      "burger","soup","coffee","tea","juice","cocktail","beer","reservation","book","welcome", 
+    ]);
+
+    const isEnglishSuspicious = (t) => {
+      if (EN_MIXED_PUNCT.test(t)) return true;   // fo;b, op[w 등
+      if (!EN_ALPHA.test(t)) return false;       // 영문이 아니면 패스
+
+      const w = t.toLowerCase();
+      if (EN_WHITELIST.has(w)) return false;
+
+      if (EN_CONSONANT_RUN.test(w)) return true;           // 자음 4연속
+      const vowels = (w.match(/[aeiouy]/g) || []).length;  // y를 모음 포함
+      const vr = vowels / w.length;
+
+      if (w.length <= 2) return true;
+      if (w.length >= 4 && vr < 0.25) return true;         // 모음비율 매우 낮음
+      if (w.length >= 8 && vr < 0.30) return true;
+
+      return false;
+    };
+
+
+    // 비율
+    const shortRatio = totalTokens ? shortCnt / totalTokens : 0;
+    const jamoOnlyRatio = totalTokens ? jamoOnlyCnt / totalTokens : 0;
+    const hangulSyllRatio = totalTokens ? hangulSyllCnt / totalTokens : 0;
+
+    // 섹션별 최소 단어 충족 수준에서만 검사(오탐 줄이기)
+    const reachedMinWords =
+      (currentSectionIndex === 0 && totalTokens >= 10) ||
+      (currentSectionIndex > 0 && totalTokens >= 30);
+
+    if (reachedMinWords) {
+      // 임계치(필요에 따라 조절하세요)
+      const SHORT_MAX = 0.70;      // 70% 이상이 1~2글자면 의심
+      const JAMO_MAX  = 0.10;      // 10% 이상이 자모-only면 의심
+      const HANGUL_MIN = 0.40;     // 완성형 한글 포함 비율이 40% 미만이면 의심
+      const JOSA_MIN = 1;          // 조사/어미 토큰이 최소 1개는 있어야 자연스러움
+
+      const suspiciousByLength = shortRatio >= SHORT_MAX;
+      const suspiciousByJamo   = jamoOnlyRatio >= JAMO_MAX;
+      const suspiciousByHangul = hangulSyllRatio < HANGUL_MIN;
+      const suspiciousByJosa   = josaLikeCnt < JOSA_MIN;
+
+      if (suspiciousByLength || suspiciousByJamo || (suspiciousByHangul && suspiciousByJosa)) {
+        warningMessages.push(
+          "짧은 단어/글자의 반복이 감지되었습니다. 삭제 후 정상적으로 글을 작성하면, 다음 파트로 넘어가실 수 있습니다."
+        );
+      }
+
+      // --- 영어 난타 의심 비율 ---
+      const englishSuspiciousCnt = rawTokens.filter(isEnglishSuspicious).length;
+      const englishSuspiciousRatio = totalTokens ? englishSuspiciousCnt / totalTokens : 0;
+
+      // --- 영어 토큰 비율(영어만 작성 방지) ---
+      const englishTokenCnt = rawTokens.filter((t) => EN_ALPHA.test(t)).length;
+      const englishTokenRatio = totalTokens ? englishTokenCnt / totalTokens : 0;
+
+      // 임계치 (필요시 조정)
+      const EN_SUSPICIOUS_MAX = 0.30; // 의심 영어토큰 30% 이상이면 경고
+      const ENGLISH_ONLY_MAX  = 0.80; // 전체의 80% 이상이 영어면 경고
+
+      if (englishSuspiciousRatio >= EN_SUSPICIOUS_MAX) {
+        warningMessages.push(
+          `무의미한 영어 단어가 감지되었습니다. 삭제 후 정상적으로 글을 작성하면, 다음 파트로 넘어가실 수 있습니다.`
+        );
+      }
+
+      if (englishTokenRatio >= ENGLISH_ONLY_MAX) {
+        warningMessages.push(
+          "영어로만 작성한 것으로 감지되었습니다. 과제 안내에 따라 한글로 작성해주세요."
+        );
+      }
+
+    }
+
+
+    // ---------------------------------------------------------------
+
     // 🔥 단어 수 계산 (입력된 텍스트가 비어있으면 0으로 설정)
-    let words = value.trim().length === 0 ? [] : value.trim().split(/\s+/);
+    //let words = value.trim().length === 0 ? [] : value.trim().split(/\s+/);
   
     // ✅ 5단어 이상 입력된 경우에만 단어 반복 검사 실행
-    if (words.length > 5) {
+    //if (words.length > 5) {
       // 🔥 같은 단어 반복 확인 및 하나만 입력 방지
-      const wordCounts = {};
-      words.forEach((word) => {
-        word = word.replace(/[.,!?]/g, ""); // 🔥 문장부호 제거 후 단어 카운트
-        wordCounts[word] = (wordCounts[word] || 0) + 1;
-      });
+      //const wordCounts = {};
+      //words.forEach((word) => {
+        //word = word.replace(/[.,!?]/g, ""); // 🔥 문장부호 제거 후 단어 카운트
+        //wordCounts[word] = (wordCounts[word] || 0) + 1;
+      //});
   
       // 🔥 중복 단어 비율 계산 (전체 단어의 30% 이상이 동일한 단어면 경고)
-      const overusedWords = Object.entries(wordCounts)
-        .filter(([_, count]) => count >= 5)
-        .map(([word]) => word);
+      //const overusedWords = Object.entries(wordCounts)
+        //.filter(([_, count]) => count >= 5)
+        //.map(([word]) => word);
   
-      if (overusedWords.length > 0) {
-        words = words.filter((word) => !overusedWords.includes(word));
-        warningMessages.push(`동일 글자의 반복이 감지되었습니다: ${overusedWords.join(", ")}`);
-      }} 
+      //if (overusedWords.length > 0) {
+        //words = words.filter((word) => !overusedWords.includes(word));
+        //warningMessages.push(`동일 글자의 반복이 감지되었습니다: ${overusedWords.join(", ")}`);
+      //}} 
     
     // 🔥 중복 제거 후 경고 메시지 설정
     setWarning([...new Set(warningMessages)]);
@@ -466,13 +672,13 @@ export default function WritingTest() {
     const totalWordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
 
     // 조건 1: 전화번호가 비어 있으면 제출 막기
-    if (!phoneNumber.trim()) {
-      errorMessages.push("❌ 전화번호를 입력해주세요.");
-    }
+//    if (!phoneNumber.trim()) {
+//      errorMessages.push("❌ 전화번호를 입력해주세요.");
+//    }
     // 전화번호 형식 검사
-    else if (!/^010-\d{4}-\d{4}$/.test(phoneNumber.trim())) {
-      errorMessages.push("❌ 전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)");
-    }
+//    else if (!/^010-\d{4}-\d{4}$/.test(phoneNumber.trim())) {
+//      errorMessages.push("❌ 전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)");
+//    }
 
     // 조건 2: 아직 섹션 5까지 안옴
     if (currentSectionIndex < sections.length - 1) {
@@ -508,14 +714,14 @@ export default function WritingTest() {
 
       //firebase에 UID 포함하여 데이터에 저장
       await addDoc(collection(db, "new-promotion-early-1"), {
-        phoneNumber: phoneNumber,
+//        phoneNumber: phoneNumber,
         wordCount: totalWordCount,
         timestamp: formattedKoreaTime,  // ✅ 한국 시간으로 변환한 값 저장
         text: fullText.trim(), 
       });
 
       alert("✅ 작성하신 글이 성공적으로 제출되었습니다!");
-      setPhoneNumber(""); // 전화번호 초기화
+//      setPhoneNumber(""); // 전화번호 초기화
       setCurrentInput("");
       setCurrentWordCount(0);
       setSectionTexts(["", "", "", "", ""]);
@@ -543,9 +749,10 @@ export default function WritingTest() {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
           
       {/* 제목 및 안내 */}
-      <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}> 
+      <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}
+        onCopy={(e) => {e.preventDefault();}}> 
         <h2>📝 양식 레스토랑 홍보글 작성하기</h2>
-        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 양식 레스토랑의 대표가 되었다고 상상하면서, 다음과 같은 순서로 레스토랑의 홍보글을 작성해주세요.</p>
+        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 양식 레스토랑의 대표가 되었다고 상상하면서, 다음과 같은 순서로 레스토랑의 홍보글을 한글로 작성해주세요.</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 레스토랑 이름과 간략한 소개 (10단어 이상) </p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 레스토랑과의 차별점 (30단어 이상)</p>
@@ -554,8 +761,9 @@ export default function WritingTest() {
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 매장 위치 및 내부 설명 (30단어 이상)</p>
         </div>
         <p style = {{ color: "darkred", fontSize: "16px", marginBottom: "-15px"}}> 각 파트를 단어수 제한에 맞게 작성한 후 '다음 순서로 넘어가기' 버튼을 누르면 다음 파트로 넘어갈 수 있습니다. 총 5개의 파트를 모두 마친 후 제출하기 버튼을 눌러주세요!</p>
-        <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> ⚠️ 주의: 글쓰기 과제에 대해 불성실한 참여가 확인될 경우, 설문을 완료했더라도 보상 지급이 어려울 수 있습니다. </p>
-        <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> 한번 다음 파트로 넘어가면 이전 파트로 돌아갈 수 없으니, 이점 유념하시어 성실한 참여 부탁드립니다. </p>
+        <p style = {{ padding: "0.5px"}}></p>
+        <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> ⚠️ 주의: 글쓰기 과제에 대해 불성실한 참여(예: 주제와 전혀 관련없는 내용, 무의미한 단어 및 문장 반복, 영어로만 작성 등)가 확인될 경우, 설문을 완료했더라도 보상 지급이 어려울 수 있습니다. </p>
+        <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> ⚠️ 한번 다음 파트로 넘어가면 이전 파트로 돌아갈 수 없으니, 이점 유념하시어 성실한 참여 부탁드립니다. </p>
       </div>
 
       {/* 실시간 반영 홍보글 */}
@@ -604,6 +812,13 @@ export default function WritingTest() {
             onChange={(e) => handleChange(e.target.value)}
             placeholder="여기에 글을 작성해주세요..."
             disabled={isInputDisabled}
+            // ⛔ 붙여넣기/드래그/단축키 차단
+            onPaste={preventPaste}
+            onDrop={preventDrop}
+            onDragOver={preventDrop}
+            onKeyDown={preventKeyPaste}
+            // (옵션) 우클릭 메뉴도 막고 싶다면 주석 해제
+            onContextMenu={(e) => e.preventDefault()}
           />
           {showInputLockMessage && (
             <p style={{ color: "gray", fontWeight: "bold", fontSize: "14px", marginTop: "5px", marginBottom: "0px" }}>
@@ -788,7 +1003,8 @@ export default function WritingTest() {
 
               {/*예시 문장 선택창 표시*/}
               {showExampleContainer && (
-                <div style={{ marginTop: "20px", backgroundColor: "#fff", padding: "15px", border: "1px dashed #aaa", borderRadius: "6px" }}>
+                <div style={{ marginTop: "20px", backgroundColor: "#fff", padding: "15px", border: "1px dashed #aaa", borderRadius: "6px" }}
+                  onCopy={(e) => {e.preventDefault();}}>
                   <p style={{ fontWeight: "bold" }}>당신의 글에 넣을 문장을 선택해주세요:</p>
 
                     <p>
@@ -870,26 +1086,7 @@ export default function WritingTest() {
         gap: "12px", 
         marginBottom: "20px"
       }}>
-        <div>
-          <label htmlFor="phoneInput" style={{ fontWeight: "bold", marginRight: "8px" }}>
-            📱 전화번호:
-          </label>
-          <input
-            id="phoneInput"
-            type="text"
-            inputMode="text" // ← 모바일 키보드는 숫자 기반
-            pattern="[0-9\-]*"   // ← 숫자와 하이픈만 허용
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="010-1234-5678"
-            style={{
-              padding: "8px",
-              borderRadius: "6px",
-              border: "1px solid #ccc",
-              width: "180px"
-            }}
-          />
-        </div>
+      {/* 전화번호 입력칸 자리 */}
 
         <button
           onClick={() => {handleFinalSubmit()}}
@@ -909,10 +1106,7 @@ export default function WritingTest() {
         </button>
       </div>
 
-      <span style={{ marginTop: "10px", fontSize: "15px", color: "gray", textAlign: "center", display: "block" }}>
-        ✅참여 확인을 위해 전화번호를 반드시 입력해주세요.
-      </span>
-
+      {/* 전화번호 입력 메시지 자리 */}
 
       <span style={{ marginTop: "5px", fontSize: "15px", color: "gray", textAlign: "center", display: "block" }}>
         🔔제출버튼을 누르면 2~3초 후 제출이 완료되며, 자동으로 설문페이지로 넘어갑니다. 남은 설문을 완료해주세요.
