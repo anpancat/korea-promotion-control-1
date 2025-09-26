@@ -100,17 +100,19 @@ export default function WritingTest() {
   const progressRatio = (currentSectionIndex + 1) / sections.length;
   
 
-  // 고유번호 입력 상태
-  const [userNumber, setUserNumber] = useState("");
-  // ✅ 파트1 고유번호 입력 필수 유효성
-  const needUserNumber = currentSectionIndex === 0;
-  const isUserNumberFilled = userNumber.trim().length > 0;
+  // 패널 아이디 상태
+  const [panelId, setPanelId] = useState(null);  
 
   // 전화번호 입력 상태 추가
 //  const [phoneNumber, setPhoneNumber] = useState("");
 
 
-
+  // 마운트 시 1회 URL 파라미터에서 panel_id 추출
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get("panel_id");
+    setPanelId(pid);
+  }, []);
 
   // 🔥 입력 잠금 메시지 상태 추가
   useEffect(() => {
@@ -722,7 +724,7 @@ export default function WritingTest() {
       //firebase에 UID 포함하여 데이터에 저장
       await addDoc(collection(db, "new-promotion-early-1"), {
 //        phoneNumber: phoneNumber,
-        userNumber, // 입력한 고유번호 저장
+        panelId: panelId, // URL 파라미터에서 가져온 panel_id 저장
         wordCount: totalWordCount,
         timestamp: formattedKoreaTime,  // ✅ 한국 시간으로 변환한 값 저장
         text: fullText.trim(), 
@@ -730,7 +732,6 @@ export default function WritingTest() {
 
       alert("✅ 작성하신 글이 성공적으로 제출되었습니다!");
 //      setPhoneNumber(""); // 전화번호 초기화
-      setUserNumber(""); // 고유번호 입력칸 초기화
       setCurrentInput("");
       setCurrentWordCount(0);
       setSectionTexts(["", "", "", "", ""]);
@@ -814,34 +815,7 @@ export default function WritingTest() {
       )}
 
       {currentSectionIndex < sections.length && ( 
-        // 고유 번호 입력 칸
         <div style={{ width: "80%", textAlign: "left", fontSize: "18px" }}>
-          {currentSectionIndex === 0 && (
-            <div style={{ marginBottom: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <label style={{ fontSize: 16 }}>고유 번호:</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                value={userNumber}
-                onChange={(e) => setUserNumber(e.target.value)}
-                placeholder="숫자를 입력하세요"
-                style={{
-                  width: "160px",
-                  padding: "6px 10px",
-                  border: "1px solid #ccc",
-                  borderRadius: 4,
-                  textAlign: "left"
-                }}
-              />
-            </div>
-          )}
-
-          {needUserNumber && !isUserNumberFilled && (
-            <p style={{ color: "red", fontSize: "16px", marginTop: "-4px", marginBottom: "8px" }}>
-              ❌ 고유 번호를 입력해야 다음 파트로 넘어갈 수 있습니다.
-            </p>
-          )}
-
           <textarea
             style={{ width: "100%", height: "100px", padding: "10px", border: "1px solid #ccc", fontSize: "16px" }}
             value={isPreTextTyping ? preTextTyping : currentInput}
@@ -922,12 +896,11 @@ export default function WritingTest() {
 
       {/* ✅ 아래쪽: 버튼 또는 안내 메시지 + warning */}
       <div style={{ width: "80%", marginTop: "-5px" }}>
-        {((
-          (currentSectionIndex === 0 && currentWordCount >= 10) ||
-          (currentSectionIndex > 0 && currentWordCount >= 30))
-          && warning.length === 0
-          && (!needUserNumber || isUserNumberFilled) // 고유번호 입력되어 있어야 파트 넘어감
-        ) && (
+        {(
+          ((currentSectionIndex === 0 && currentWordCount >= 10) ||
+           (currentSectionIndex > 0 && currentWordCount >= 30)) && 
+          warning.length === 0
+        ) ? (
           currentSectionIndex < sections.length - 1 ? (
             <button
               onClick={handleNextSection}
@@ -963,7 +936,7 @@ export default function WritingTest() {
               💡 홍보글에 필요한 내용이 모두 작성되었습니다! 아래 제출 버튼을 눌러주세요.
             </p>
           )
-        )}
+        ) : null}
 
         {warning.length > 0 && (
           <div style={{ color: "red", fontWeight: "bold", fontSize: "16px", marginTop: "0px" }}>
