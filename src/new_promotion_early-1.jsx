@@ -721,7 +721,7 @@ export default function WritingTest() {
       const formattedKoreaTime = formatter.format(koreaTime);
 
       //firebase에 UID 포함하여 데이터에 저장
-      await addDoc(collection(db, "new-promotion-early-1"), {
+      await addDoc(collection(db, "embrain-study1-early-1"), {
 //        phoneNumber: phoneNumber,
         panelId: panelId, // URL 파라미터에서 가져온 panel_id 저장
         wordCount: totalWordCount,
