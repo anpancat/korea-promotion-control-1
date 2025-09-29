@@ -762,6 +762,7 @@ export default function WritingTest() {
         onCopy={(e) => {e.preventDefault();}}> 
         <h2>📝 양식 레스토랑 홍보글 작성하기</h2>
         <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 양식 레스토랑의 대표가 되었다고 상상하면서, 다음과 같은 순서로 레스토랑의 홍보글을 한글로 작성해주세요.</p>
+        <p style = {{ fontSize: "18px", marginTop: "4px", marginBottom: "-5px"}}> - 홍보글 작성 초반에 AI 글쓰기 파트너 'DraftMind'가 하단에 등장하여 여러분을 도와줄 것입니다. 함깨 홍보글을 완성해보세요.</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 레스토랑 이름과 간략한 소개 (10단어 이상) </p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 레스토랑과의 차별점 (30단어 이상)</p>
