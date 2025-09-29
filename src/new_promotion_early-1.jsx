@@ -762,7 +762,7 @@ export default function WritingTest() {
         onCopy={(e) => {e.preventDefault();}}> 
         <h2>📝 양식 레스토랑 홍보글 작성하기</h2>
         <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 양식 레스토랑의 대표가 되었다고 상상하면서, 다음과 같은 순서로 레스토랑의 홍보글을 한글로 작성해주세요.</p>
-        <p style = {{ fontSize: "18px", marginTop: "4px", marginBottom: "-5px"}}> - 홍보글 작성 초반에 AI 글쓰기 파트너 'DraftMind'가 하단에 등장하여 여러분을 도와줄 것입니다. 함깨 홍보글을 완성해보세요.</p>
+        <p style = {{ fontSize: "16px", marginTop: "10px", marginBottom: "-5px"}}> - 글을 작성하는 초반에 AI 글쓰기 파트너 'DraftMind'가 하단에 등장하여 여러분을 도와줄 것입니다. 'DraftMind'는 당신이 작성한 글을 읽고, 당신의 글을 개선하는 데 도움을 주는 조언을 제공합니다. 함께 홍보글을 완성해보세요.</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 레스토랑 이름과 간략한 소개 (10단어 이상) </p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 레스토랑과의 차별점 (30단어 이상)</p>
@@ -775,7 +775,7 @@ export default function WritingTest() {
         <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> ⚠️ 주의: 글쓰기 과제에 대해 불성실한 참여(예: 주제와 전혀 관련없는 내용, 무의미한 단어 및 문장 반복, 영어로만 작성 등)가 확인될 경우, 설문을 완료했더라도 보상 지급이 어려울 수 있습니다. </p>
         <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> ⚠️ 한번 다음 파트로 넘어가면 이전 파트로 돌아갈 수 없으니, 이점 유념하시어 성실한 참여 부탁드립니다. </p>
       </div>
-
+  
       {/* 실시간 반영 홍보글 */}
       <div style={{
         width: "80%",
