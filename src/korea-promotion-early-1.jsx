@@ -18,7 +18,7 @@ export default function WritingTest() {
   const [hasTriggeredOnce, setHasTriggeredOnce] = useState(false); // AI 애니메이션 조건 제어용
 
   const [displayText, setDisplayText] = useState("");
-  const predefinedText1 = "한국은 뚜렷한 사계절이 특징입니다. 봄과 가을에는 쾌적한 날씨가 이어지며 야외 활동이나 여행하기에 완벽합니다. 여름에는 푸른 바다를, 겨울에는 전국 어디에서나 눈과 얼음을 볼 수 있어 다양한 계절의 아름다움을 만끽할 수 있습니다."; // 미리 정해진 문장 삽입
+  const predefinedText1 = "한국은 뚜렷한 사계절이 특징입니다. 봄과 가을에는 쾌적한 날씨가 이어지며 야외 활동이나 여행하기에 완벽합니다. 여름에는 푸른 바다를, 겨울에는 전국 어디에서나 눈과 얼음을 볼 수 있어 다양한 계절의 아름다움을 만끽할 수 있습니다. "; // 미리 정해진 문장 삽입
 
   // 선택된 예시 문장을 담을 상태
   const [selectedExampleIndex, setSelectedExampleIndex] = useState(null);
