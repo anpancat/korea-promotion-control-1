@@ -329,30 +329,6 @@ export default function WritingTest() {
     }
 
 
-    // ---------------------------------------------------------------
-
-    // 🔥 단어 수 계산 (입력된 텍스트가 비어있으면 0으로 설정)
-    //let words = value.trim().length === 0 ? [] : value.trim().split(/\s+/);
-  
-    // ✅ 5단어 이상 입력된 경우에만 단어 반복 검사 실행
-    //if (words.length > 5) {
-      // 🔥 같은 단어 반복 확인 및 하나만 입력 방지
-      //const wordCounts = {};
-      //words.forEach((word) => {
-        //word = word.replace(/[.,!?]/g, ""); // 🔥 문장부호 제거 후 단어 카운트
-        //wordCounts[word] = (wordCounts[word] || 0) + 1;
-      //});
-  
-      // 🔥 중복 단어 비율 계산 (전체 단어의 30% 이상이 동일한 단어면 경고)
-      //const overusedWords = Object.entries(wordCounts)
-        //.filter(([_, count]) => count >= 5)
-        //.map(([word]) => word);
-  
-      //if (overusedWords.length > 0) {
-        //words = words.filter((word) => !overusedWords.includes(word));
-        //warningMessages.push(`동일 글자의 반복이 감지되었습니다: ${overusedWords.join(", ")}`);
-      //}} 
-    
     // 🔥 중복 제거 후 경고 메시지 설정
     setWarning([...new Set(warningMessages)]);
   };
