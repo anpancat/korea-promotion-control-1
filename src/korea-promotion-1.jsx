@@ -81,19 +81,7 @@ export default function WritingTest() {
   };
   const [isWaitingBeforePreTyping, setIsWaitingBeforePreTyping] = useState(false);
 
-  const shouldShowNextButton = () => {
-    if (currentSectionIndex !== 1) return true;
-
-    // 1차 등장: 30단어 이상이면 나타나야 함
-    if (!hasTriggeredOnce && currentWordCount >= 30) return true;
-
-    // 2차 등장: 모든 AI 흐름 끝난 뒤 다시 등장
-    return (
-      !isEndingTyping &&
-      endingIndex >= endingText.length &&
-      hasInsertedExample
-    );
-  };
+  const shouldShowNextButton = () => true;
 
 
   // 섹션 진행률 표시
@@ -611,28 +599,10 @@ export default function WritingTest() {
     updated[currentSectionIndex] = currentInput;
     setSectionTexts(updated);
 
-    // ✅ 오직 2번 섹션(=index 1)이 끝났을 때만 AI 흐름 시작
-    if (currentSectionIndex === 1) {
-      // 👇 이미 AI 출력이 완료된 경우 → 다음 섹션으로 이동
-      if (!isHelloTyping && !isFullTextTyping && !isPreTextTyping && !isErasing && !isEndingTyping && hasTriggeredOnce) {
-        moveToNextSection();  // ✅ 한 번만 실행
-        return;
-      }
-
-      // 👇 아직 AI 흐름 시작 전이라면 triggerAIHelp 실행
-      if (!hasTriggeredOnce) {
-        triggerAIHelp();  // ✨ 최초 1회만 실행
-      }
-      
-      return;  // AI 흐름 중일 땐 아무 것도 하지 않음
-    }
-
-    // ✅ 섹션 1,3,4,5는 그냥 넘어감
     if (currentSectionIndex < sections.length - 1) {
       setCurrentInput("");
       setCurrentWordCount(0);
       setCurrentSectionIndex(currentSectionIndex + 1);
-      setIsInputDisabled(false);
    } else {
       setCurrentInput("");
       setCurrentWordCount(0);
@@ -694,7 +664,7 @@ export default function WritingTest() {
       const formattedKoreaTime = formatter.format(koreaTime);
 
       //firebase에 UID 포함하여 데이터에 저장
-      await addDoc(collection(db, "korea-promotion-early-1"), {
+      await addDoc(collection(db, "korea-promotion-control-1"), {
 //        phoneNumber: phoneNumber,
         panelId: panelId, // URL 파라미터에서 가져온 panel_id 저장
         wordCount: totalWordCount,
@@ -735,7 +705,6 @@ export default function WritingTest() {
         onCopy={(e) => {e.preventDefault();}}> 
         <h2>📝 'Visit Korea' 캠페인 홍보글 작성하기</h2>
         <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 'Visit Korea' 캠페인의 홍보 담당자가 되었다고 상상하면서, 다음과 같은 순서로 해외 방문객에게 대한민국을 알리는 홍보글을 한글로 작성해주세요.</p>
-        <p style = {{ fontSize: "16px", marginTop: "10px", marginBottom: "-5px"}}> - 글을 작성하는 초반에 AI 글쓰기 파트너 'DraftMind'가 하단에 등장하여 여러분을 도와줄 것입니다. 'DraftMind'는 당신이 작성한 글을 읽고, 당신의 글을 개선하는 데 도움을 주는 조언을 제공합니다. 함께 홍보글을 완성해보세요.</p>
         <div style={{ lineHeight: "1.5"}}>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 해외 방문객에 대한 인사말 (10단어 이상) </p>
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 대한민국의 매력1 (30단어 이상)</p>
@@ -794,7 +763,6 @@ export default function WritingTest() {
             value={isPreTextTyping ? preTextTyping : currentInput}
             onChange={(e) => handleChange(e.target.value)}
             placeholder="여기에 글을 작성해주세요..."
-            disabled={isInputDisabled}
             // ⛔ 붙여넣기/드래그/단축키 차단
             onPaste={preventPaste}
             onDrop={preventDrop}
@@ -803,13 +771,6 @@ export default function WritingTest() {
             // (옵션) 우클릭 메뉴도 막고 싶다면 주석 해제
             onContextMenu={(e) => e.preventDefault()}
           />
-          {showInputLockMessage && (
-            <p style={{ color: "gray", fontWeight: "bold", fontSize: "14px", marginTop: "5px", marginBottom: "0px" }}>
-              {hasTriggeredOnce && endingIndex >= endingText.length && hasInsertedExample
-                ? "🪄 DraftMind의 입력이 완료되었습니다!"
-                : "✨ DraftMind가 입력중입니다. 잠시만 기다려주세요..."}
-            </p>
-          )}
         </div>
       )}
 
@@ -919,100 +880,6 @@ export default function WritingTest() {
           </div>
         )}
       </div>
-
-      {/* AI DraftMind의 출력이 나타나는 영역 */}
-      {currentSectionIndex === 1 && (
-        <div 
-          style={{ 
-            width: "78.5%",
-            marginLeft: "21px", 
-            marginTop: "10px",
-            padding: "20px",
-            border: "1px solid #ccc",
-            backgroundColor: "#f9f9f9",
-            textAlign: "left",
-            overflow: "visible", // 출력내용이 많아지면 자동으로 출력창 크기 조절
-            wordBreak: "break-word", // 긴 단어가 출력창을 넘어가면 줄바꿈
-            whiteSpace: "pre-wrap", // \n을 줄바꿈으로 인식
-            display: "flex",
-            flexDirection: "column", // 제목, 설명, 본문을 세로 정렬
-            alignItems: "center",
-          }}>
-
-          {/* 제목 */}
-          <h2 style={{ marginTop: "-10px", textAlign: "center", fontSize: "30px", marginBottom: "-10px" }}> 
-          <em>AI DraftMind</em>🪶
-          </h2>
-       
-          {/* 설명 */}
-          <p style={{marginBottom: "20px", fontSize: "16px", textAlign: "center", color: "gray" }}>
-            DraftMind 는 당신이 작성한 글을 읽고, 당신의 글을 개선하는 데 도움을 주는 조언을 제공합니다.
-          </p>
-
-          {/* 본문 및 이미지 컨테이너 (병렬 배치) */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              width: "100%",
-            }}
-          >
-
-          {/* AI 아이콘 (왼쪽) */}
-          <img
-            src="/images/DraftMind_image.png"
-            alt="AI Icon"
-            style={{
-              width: "60px",
-              height: "60px",
-              borderRadius: "50%", // 원형 이미지
-              marginRight: "15px", // 이미지와 본문 사이 간격
-              objectFit: "cover",
-            }}
-          />
-
-          {/* 본문 (오른쪽) */}
-          <div style={{ flex:1 }}>
-            {hasTriggeredOnce && displayText.trim() !== "" && (
-              <>
-                {displayText
-                  .replaceAll(", ", ",\u00A0") // 쉼표 뒤 공백을 불간섭 공백으로 대체하여 줄바꿈 방지
-                  .split("\n")
-                  .map((line, index) => (
-                    <p key={index} style={{ fontWeight: "bold", fontSize: "16px", whiteSpace: "pre-wrap", wordBreak: "break-word", marginBottom: "10px" }}>
-                      {line}
-                    </p>
-                  ))}
-              </>
-            )}
-
-              {/*예시 문장 선택창 표시*/}
-              {showExampleContainer && (
-                <div style={{ marginTop: "20px", backgroundColor: "#fff", padding: "15px", border: "1px dashed #aaa", borderRadius: "6px" }}
-                  onCopy={(e) => {e.preventDefault();}}>
-                  <p style={{ fontWeight: "bold" }}>당신의 글에 넣을 문장을 선택해주세요:</p>
-
-                    <p>
-                      {exampleTypingTexts[0]}
-                    </p>
-
-                  {showExampleChoice && (
-                    <div style={{ marginTop: "10px", display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                        <button
-                          onClick={() => handleExampleChoice()}
-                          style={{ padding: "8px 16px" }}
-                        >
-                          위 문장 선택
-                        </button>
-                    </div>
-                  )}
-                </div>
-              )}      
-            </div>
-          </div>
-        </div>
-      )}
 
 
     {/* Submit 버튼 - 가장 아래로 배치 */}
