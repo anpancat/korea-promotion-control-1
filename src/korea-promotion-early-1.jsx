@@ -4,11 +4,11 @@ import { db, collection, addDoc } from "./firebaseConfig"; // firebase 인증 �
 
 export default function WritingTest() {
   const sections = [
-    "레스토랑 이름과 간략한 소개 (10단어 이상)",
-    "다른 레스토랑과의 차별점",
-    "주요 고객층 및 홍보 전략",
-    "추천 메뉴",
-    "매장 위치 및 내부 설명"
+    "해외 방문객에 대한 인사말 (10단어 이상)",
+    "대한민국의 매력1",
+    "대한민국의 매력2",
+    "대한민국의 매력3",
+    "대한민국의 매력4"
   ];
 
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
@@ -18,7 +18,7 @@ export default function WritingTest() {
   const [hasTriggeredOnce, setHasTriggeredOnce] = useState(false); // AI 애니메이션 조건 제어용
 
   const [displayText, setDisplayText] = useState("");
-  const predefinedText1 = "저희 레스토랑은 다양한 메뉴를 제공합니다. 남녀노소 모두가 만족할 수 있는 식사를 위해, 다채로운 메뉴를 마련했다는 점에서 다른 레스토랑과 차별화됩니다. 덕분에 고객 여러분께서는 취향과 기분에 따라 다양한 음식을 선택하실 수 있습니다."; // 미리 정해진 문장 삽입
+  const predefinedText1 = "한국은 뚜렷한 사계절이 특징입니다. 봄과 가을에는 쾌적한 날씨가 이어지며 야외 활동이나 여행하기에 완벽합니다. 여름에는 푸른 바다를, 겨울에는 전국 어디에서나 눈과 얼음을 볼 수 있어 다양한 계절의 아름다움을 만끽할 수 있습니다."; // 미리 정해진 문장 삽입
 
   // 선택된 예시 문장을 담을 상태
   const [selectedExampleIndex, setSelectedExampleIndex] = useState(null);
@@ -30,9 +30,9 @@ export default function WritingTest() {
   const [preTextTyping, setPreTextTyping] = useState("");   // 타이핑 중인 글자
 
   const typingText = "...DraftMind가 입력중 입니다..."; //입력중
-  const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n지금 '양식 레스토랑 홍보글'을 쓰고 계시네요."; // 인사말
-  const fullText = "홍보글 초반부를 작성하고 계시는군요. '다른 레스토랑과의 차별점' 파트는 제가 도와드릴게요."; // AI 글쓰기 제안문구
-  const endingText = "\n\n위와 같이 '다른 레스토랑과의 차별점' 파트를 작성해보았어요. \n위의 초록색 '다음 파트로 넘어가기' 버튼을 눌러 홍보글을 이어서 작성해주세요.";
+  const hello = "안녕하세요! 저는 글쓰기 전문 AI 'DraftMind'에요. \n지금 '해외 방문객에게 대한민국을 알리는 홍보글'을 쓰고 계시네요."; // 인사말
+  const fullText = "홍보글 초반부를 작성하고 계시는군요. '대한민국의 매력 1' 파트는 제가 도와드릴게요."; // AI 글쓰기 제안문구
+  const endingText = "\n\n위와 같이 '대한민국의 매력 1' 파트를 작성해보았어요. \n위의 초록색 '다음 파트로 넘어가기' 버튼을 눌러 홍보글을 이어서 작성해주세요.";
 
   const [typingIndex, setTypingIndex] = useState(0);
   const [helloIndex, setHelloIndex] = useState(0);
@@ -252,10 +252,7 @@ export default function WritingTest() {
     const EN_WHITELIST = new Set([
       "the","a","an","and","to","of","for","in","on","with","at","from","by","is","are","this","that","it",
       "we","you","they","our","your","i","he","she","as","be","or","if","not","but","so",
-      "restaurant","menu","dish","dishes","price","prices","location","service","taste","tasty", "flavor",
-      "special","unique","recommend","open","hours","near","city","street","fresh","daily","customer","customers",
-      "quality","chef","bar","wine","dessert","lunch","dinner","brunch","seafood","steak","pasta","salad", "risotto", "pizza", 
-      "burger","soup","coffee","tea","juice","cocktail","beer","reservation","book","welcome", 
+      "Korea","welcome" 
     ]);
 
     const isEnglishSuspicious = (t) => {
@@ -721,7 +718,7 @@ export default function WritingTest() {
       const formattedKoreaTime = formatter.format(koreaTime);
 
       //firebase에 UID 포함하여 데이터에 저장
-      await addDoc(collection(db, "embrain-study1-early-1"), {
+      await addDoc(collection(db, "korea-promotion-early-1"), {
 //        phoneNumber: phoneNumber,
         panelId: panelId, // URL 파라미터에서 가져온 panel_id 저장
         wordCount: totalWordCount,
@@ -760,15 +757,15 @@ export default function WritingTest() {
       {/* 제목 및 안내 */}
       <div style={{ width: "80%", textAlign: "left", marginBottom: "5px", fontSize: "18px" }}
         onCopy={(e) => {e.preventDefault();}}> 
-        <h2>📝 양식 레스토랑 홍보글 작성하기</h2>
-        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 가상의 양식 레스토랑의 대표가 되었다고 상상하면서, 다음과 같은 순서로 레스토랑의 홍보글을 한글로 작성해주세요.</p>
+        <h2>📝 'Visit Korea' 캠페인 홍보글 작성하기</h2>
+        <p style = {{ fontSize: "18px", marginBottom: "-5px"}}> 'Visit Korea' 캠페인의 홍보 담당자가 되었다고 상상하면서, 다음과 같은 순서로 해외 방문객에게 대한민국을 알리는 홍보글을 한글로 작성해주세요.</p>
         <p style = {{ fontSize: "16px", marginTop: "10px", marginBottom: "-5px"}}> - 글을 작성하는 초반에 AI 글쓰기 파트너 'DraftMind'가 하단에 등장하여 여러분을 도와줄 것입니다. 'DraftMind'는 당신이 작성한 글을 읽고, 당신의 글을 개선하는 데 도움을 주는 조언을 제공합니다. 함께 홍보글을 완성해보세요.</p>
         <div style={{ lineHeight: "1.5"}}>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 레스토랑 이름과 간략한 소개 (10단어 이상) </p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 다른 레스토랑과의 차별점 (30단어 이상)</p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>3. 주요 고객층 및 홍보 전략 (30단어 이상)</p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>4. 추천 메뉴 (30단어 이상)</p>
-          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 매장 위치 및 내부 설명 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>1. 해외 방문객에 대한 인사말 (10단어 이상) </p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>2. 대한민국의 매력1 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>3. 대한민국의 매력2 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "-15px" }}>4. 대한민국의 매력3 (30단어 이상)</p>
+          <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 대한민국의 매력4 (30단어 이상)</p>
         </div>
         <p style = {{ color: "darkred", fontSize: "16px", marginBottom: "-15px"}}> 각 파트를 단어수 제한에 맞게 작성한 후 '다음 순서로 넘어가기' 버튼을 누르면 다음 파트로 넘어갈 수 있습니다. 총 5개의 파트를 모두 마친 후 제출하기 버튼을 눌러주세요!</p>
         <p style = {{ padding: "0.5px"}}></p>
@@ -792,7 +789,7 @@ export default function WritingTest() {
         fontSize: "16px",
         }}>
 
-        <strong>✏️ To. 고객 여러분 </strong>
+        <strong>✏️ To. 방문객 여러분 </strong>
         <p>
           {currentSectionIndex < sectionTexts.length
             ? [...sectionTexts.slice(0, currentSectionIndex), currentInput]

@@ -1,4 +1,4 @@
-import WritingTest from "./new_promotion_early-1";
+import WritingTest from "./korea_promotion_early-1";
 
 function App() {
   return <WritingTest/>;
