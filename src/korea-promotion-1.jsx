@@ -713,7 +713,6 @@ export default function WritingTest() {
           <p style={{ color: "dimgray", fontSize: "16px", marginBottom: "0px" }}>5. 대한민국의 매력4 (30단어 이상)</p>
         </div>
         <p style = {{ color: "darkred", fontSize: "16px", marginBottom: "-15px"}}> 각 파트를 단어수 제한에 맞게 작성한 후 '다음 순서로 넘어가기' 버튼을 누르면 다음 파트로 넘어갈 수 있습니다. 총 5개의 파트를 모두 마친 후 제출하기 버튼을 눌러주세요!</p>
-        <p style = {{ padding: "0.5px"}}></p>
         <p style = {{ color: "red", fontSize: "16px", marginBottom: "-15px"}}> ⚠️ 한번 다음 파트로 넘어가면 이전 파트로 돌아갈 수 없으니, 이점 유념하시어 성실한 참여 부탁드립니다. </p>
       </div>
   
